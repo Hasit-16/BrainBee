@@ -51,12 +51,7 @@ export function useUserSession() {
       instituteId: 'inst_01',
       tier: 'UNASSIGNED',
       topicDiagnostics: {},
-      chapterTiers: {
-        chap_01: 'BEGINNER',
-        chap_02: 'BEGINNER',
-        chap_03: 'BEGINNER',
-        chap_04: 'INTERMEDIATE',
-      },
+      chapterTiers: {},
     };
 
     try {

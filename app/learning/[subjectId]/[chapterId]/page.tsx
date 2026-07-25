@@ -38,23 +38,15 @@ export default function ChapterLandingPage() {
     currentSubject.chapters.find((c) => c.chapter_id === chapterId) ||
     currentSubject.chapters[0];
 
-  // Determine if diagnostic has been taken
+  // STEP 2 FIX: Check localStorage for Chapter Tier explicitly.
+  // If tier is null, undefined, or missing, default to Pre-Diagnostic State.
+  const storedChapterTier = chapterTiers?.[chapterId];
   const hasDiagnosticBeenTaken =
-    Boolean(chapterTiers[chapterId]) ||
-    Boolean(session?.topicDiagnostics?.[chapterId]) ||
-    Boolean(session?.topicDiagnostics?.top_01) ||
-    (globalTier && globalTier !== 'UNASSIGNED');
+    storedChapterTier !== undefined &&
+    storedChapterTier !== null &&
+    (storedChapterTier as string) !== 'UNASSIGNED';
 
-  const assignedTier: ChapterTierState =
-    chapterTiers[chapterId] ||
-    (globalTier === 'ADVANCED'
-      ? 'ADVANCED'
-      : globalTier === 'BEGINNER'
-      ? 'INTERMEDIATE'
-      : globalTier === 'FOUNDATION'
-      ? 'BEGINNER'
-      : 'BEGINNER');
-
+  const assignedTier: ChapterTierState = storedChapterTier || 'BEGINNER';
   const isChapCompleted = assignedTier === 'COMPLETED';
 
   // Dynamic unlocking flags (post-diagnostic)
@@ -108,7 +100,7 @@ export default function ChapterLandingPage() {
         </div>
       </header>
 
-      {/* STEP 3: PRE-DIAGNOSTIC STATE BANNER */}
+      {/* STEP 2: PRE-DIAGNOSTIC STATE BANNER */}
       {!hasDiagnosticBeenTaken ? (
         <Card variant="white" className="p-8 flex flex-col md:flex-row items-center justify-between gap-6 border-2 border-blue-400">
           <div className="flex items-start gap-4">
@@ -137,7 +129,7 @@ export default function ChapterLandingPage() {
           </Link>
         </Card>
       ) : (
-        /* STEP 4: POST-DIAGNOSTIC HEADER */
+        /* POST-DIAGNOSTIC HEADER */
         <Card variant="white" className="p-6 flex items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-2">
@@ -211,8 +203,9 @@ export default function ChapterLandingPage() {
                     {isBegSkipped ? 'Retake Quiz' : 'Pass Quiz → Unlock Next Tier'}
                   </Button>
                 ) : (
+                  /* STEP 3 FIX: Route Start Topic button to /learning/[subjectId]/[chapterId]/[topicId]/module */
                   <Link
-                    href={`/learning/${subjectId}/${chapterId}/diagnostic`}
+                    href={`/learning/${subjectId}/${chapterId}/${topic.topic_id}/module`}
                     className="no-underline w-full"
                   >
                     <Button variant="secondary" size="md" className="w-full flex justify-center" disabled={!isBegUnlocked}>
@@ -280,8 +273,9 @@ export default function ChapterLandingPage() {
                     {isIntSkipped ? 'Retake Quiz' : 'Pass Quiz → Unlock Advanced'}
                   </Button>
                 ) : (
+                  /* STEP 3 FIX: Route Start Topic button to /learning/[subjectId]/[chapterId]/[topicId]/module */
                   <Link
-                    href={`/learning/${subjectId}/${chapterId}/diagnostic`}
+                    href={`/learning/${subjectId}/${chapterId}/${topic.topic_id}/module`}
                     className="no-underline w-full"
                   >
                     <Button variant="white" size="md" className="w-full flex justify-center" disabled={!isIntUnlocked}>
@@ -349,8 +343,9 @@ export default function ChapterLandingPage() {
                     Pass Quiz → Master Chapter 🏆
                   </Button>
                 ) : (
+                  /* STEP 3 FIX: Route Start Topic button to /learning/[subjectId]/[chapterId]/[topicId]/module */
                   <Link
-                    href={`/learning/${subjectId}/${chapterId}/diagnostic`}
+                    href={`/learning/${subjectId}/${chapterId}/${topic.topic_id}/module`}
                     className="no-underline w-full"
                   >
                     <Button variant="white" size="md" className="w-full flex justify-center" disabled={!isAdvUnlocked}>
