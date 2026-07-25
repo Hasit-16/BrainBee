@@ -12,7 +12,7 @@ import { mockData, Subject } from '@/lib/mockData';
 export default function SubjectPage() {
   const router = useRouter();
   const params = useParams();
-  const { role, isLoaded, chapterTiers, globalTier } = useUserSession();
+  const { role, isLoaded, chapterTiers } = useUserSession();
 
   const subjectId = (params?.subjectId as string) || 'math';
 

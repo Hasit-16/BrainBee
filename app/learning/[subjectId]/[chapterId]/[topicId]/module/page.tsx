@@ -11,7 +11,7 @@ import { useUserSession } from '@/lib/store';
 export default function LessonModulePlaceholderPage() {
   const router = useRouter();
   const params = useParams();
-  const { role, isLoaded } = useUserSession();
+  const { role, isLoaded, completedQuizTopics } = useUserSession();
 
   const subjectId = (params?.subjectId as string) || 'math';
   const chapterId = (params?.chapterId as string) || 'chap_01';
@@ -26,6 +26,10 @@ export default function LessonModulePlaceholderPage() {
   if (!isLoaded || role !== 'STUDENT') {
     return null;
   }
+
+  // STEP 3: Dynamic quiz button text based on localStorage completion status
+  const isCompletedPreviously = Boolean(completedQuizTopics?.[topicId]);
+  const quizButtonLabel = isCompletedPreviously ? 'Retake the Quiz 🎯' : 'Proceed to Quiz 🎯';
 
   return (
     <main className="min-h-screen p-6 flex flex-col items-center justify-center">
@@ -45,11 +49,19 @@ export default function LessonModulePlaceholderPage() {
             </p>
           </div>
 
-          <Link href={`/learning/${subjectId}/${chapterId}`} className="no-underline w-full max-w-xs">
-            <Button variant="secondary" size="lg" className="w-full flex justify-center">
-              Return to Chapter 👈
-            </Button>
-          </Link>
+          <div className="flex flex-col sm:flex-row items-center gap-4 w-full justify-center pt-2">
+            <Link href={`/learning/${subjectId}/${chapterId}`} className="no-underline w-full sm:w-auto flex-1">
+              <Button variant="white" size="lg" className="w-full flex justify-center">
+                Return to Chapter 👈
+              </Button>
+            </Link>
+
+            <Link href={`/learning/${subjectId}/${chapterId}/${topicId}/quiz`} className="no-underline w-full sm:w-auto flex-1">
+              <Button variant="secondary" size="lg" className="w-full flex justify-center">
+                {quizButtonLabel}
+              </Button>
+            </Link>
+          </div>
         </Card>
       </div>
     </main>

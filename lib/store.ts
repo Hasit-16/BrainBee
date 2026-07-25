@@ -1,10 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { QuizQuestion } from '@/lib/mockData';
 
 export type Role = 'STUDENT' | 'TEACHER' | 'ADMIN';
 export type Tier = 'UNASSIGNED' | 'FOUNDATION' | 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
 export type ChapterTierState = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'COMPLETED';
+
+export interface SavedQuizProgress {
+  topicId: string;
+  retryPass: QuizQuestion[];
+  isIntermission: boolean;
+  timestamp: string;
+}
 
 export interface UserSession {
   id: string;
@@ -13,7 +21,9 @@ export interface UserSession {
   instituteId: string;
   tier?: Tier;
   topicDiagnostics?: Record<string, { tier: Tier; completedAt: string }>;
+  completedQuizTopics?: Record<string, boolean>;
   chapterTiers?: Record<string, ChapterTierState>;
+  savedQuizProgress?: Record<string, SavedQuizProgress>;
 }
 
 const SESSION_KEY = 'brainbee_user_session';
@@ -51,7 +61,9 @@ export function useUserSession() {
       instituteId: 'inst_01',
       tier: 'UNASSIGNED',
       topicDiagnostics: {},
+      completedQuizTopics: {},
       chapterTiers: {},
+      savedQuizProgress: {},
     };
 
     try {
@@ -75,7 +87,6 @@ export function useUserSession() {
   const updateTier = (tier: Tier, topicId?: string) => {
     if (!session) return;
     
-    // Map assigned student tier to active chapter tier
     const chapterTierState: ChapterTierState =
       tier === 'ADVANCED' ? 'ADVANCED' : tier === 'BEGINNER' ? 'INTERMEDIATE' : 'BEGINNER';
 
@@ -101,7 +112,7 @@ export function useUserSession() {
     return updatedSession;
   };
 
-  const completeQuiz = (chapterId: string, quizLevel: 'beginner' | 'intermediate' | 'advanced') => {
+  const completeQuiz = (chapterId: string, quizLevel: 'beginner' | 'intermediate' | 'advanced', topicId?: string) => {
     if (!session) return;
     const currentTiers = session.chapterTiers || {};
     let nextState: ChapterTierState = 'INTERMEDIATE';
@@ -120,6 +131,10 @@ export function useUserSession() {
         ...currentTiers,
         [chapterId]: nextState,
       },
+      completedQuizTopics: {
+        ...(session.completedQuizTopics || {}),
+        ...(topicId ? { [topicId]: true } : {}),
+      },
     };
 
     try {
@@ -131,15 +146,84 @@ export function useUserSession() {
     return nextState;
   };
 
+  const saveQuizProgress = (topicId: string, retryPass: QuizQuestion[]) => {
+    if (!session) return;
+    const currentProgress = session.savedQuizProgress || {};
+    const updatedProgress: SavedQuizProgress = {
+      topicId,
+      retryPass,
+      isIntermission: true,
+      timestamp: new Date().toISOString(),
+    };
+
+    const updatedSession: UserSession = {
+      ...session,
+      savedQuizProgress: {
+        ...currentProgress,
+        [topicId]: updatedProgress,
+      },
+    };
+
+    try {
+      localStorage.setItem(SESSION_KEY, JSON.stringify(updatedSession));
+      localStorage.setItem(`brainbee_quiz_retry_${topicId}`, JSON.stringify(updatedProgress));
+      setSession(updatedSession);
+    } catch (e) {
+      console.error('Failed to save quiz progress to localStorage', e);
+    }
+    return updatedProgress;
+  };
+
+  const getQuizProgress = (topicId: string): SavedQuizProgress | null => {
+    try {
+      const standalone = localStorage.getItem(`brainbee_quiz_retry_${topicId}`);
+      if (standalone) {
+        return JSON.parse(standalone);
+      }
+      const stored = localStorage.getItem(SESSION_KEY);
+      if (stored) {
+        const parsed: UserSession = JSON.parse(stored);
+        if (parsed.savedQuizProgress && parsed.savedQuizProgress[topicId]) {
+          return parsed.savedQuizProgress[topicId];
+        }
+      }
+    } catch (e) {
+      console.error('Failed to get quiz progress from localStorage', e);
+    }
+    return null;
+  };
+
+  const clearQuizProgress = (topicId: string) => {
+    try {
+      localStorage.removeItem(`brainbee_quiz_retry_${topicId}`);
+      const stored = localStorage.getItem(SESSION_KEY);
+      if (stored) {
+        const parsed: UserSession = JSON.parse(stored);
+        if (parsed.savedQuizProgress) {
+          delete parsed.savedQuizProgress[topicId];
+          localStorage.setItem(SESSION_KEY, JSON.stringify(parsed));
+          setSession(parsed);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to clear quiz progress from localStorage', e);
+    }
+  };
+
   return {
     session,
     role: session?.role || null,
     tier: session?.tier || 'UNASSIGNED',
     chapterTiers: session?.chapterTiers || {},
+    savedQuizProgress: session?.savedQuizProgress || {},
+    completedQuizTopics: session?.completedQuizTopics || {},
     isLoaded,
     login,
     logout,
     updateTier,
     completeQuiz,
+    saveQuizProgress,
+    getQuizProgress,
+    clearQuizProgress,
   };
 }
