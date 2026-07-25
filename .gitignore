@@ -1,0 +1,17 @@
+/node_modules
+/.next/
+/out/
+build
+.env
+.env.local
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+.DS_Store
+/coverage
+PRD.md
+TECH_STACK.md
+APP_FLOW.md
+DATABASE_SCHEMA.md
+FRONTEND_GUIDELINES.md
+Antigravity_Conversation_Fix.exe
