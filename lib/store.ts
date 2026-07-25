@@ -3,12 +3,15 @@
 import { useState, useEffect } from 'react';
 
 export type Role = 'STUDENT' | 'TEACHER' | 'ADMIN';
+export type Tier = 'UNASSIGNED' | 'FOUNDATION' | 'BEGINNER' | 'ADVANCED';
 
 export interface UserSession {
   id: string;
   name: string;
   role: Role;
   instituteId: string;
+  tier?: Tier;
+  topicDiagnostics?: Record<string, { tier: Tier; completedAt: string }>;
 }
 
 const SESSION_KEY = 'brainbee_user_session';
@@ -44,6 +47,8 @@ export function useUserSession() {
       name: defaultName,
       role: role,
       instituteId: 'inst_01',
+      tier: 'UNASSIGNED',
+      topicDiagnostics: {},
     };
 
     try {
@@ -64,11 +69,33 @@ export function useUserSession() {
     }
   };
 
+  const updateTier = (tier: Tier, topicId?: string) => {
+    if (!session) return;
+    const updatedSession: UserSession = {
+      ...session,
+      tier: tier,
+      topicDiagnostics: {
+        ...(session.topicDiagnostics || {}),
+        ...(topicId ? { [topicId]: { tier, completedAt: new Date().toISOString() } } : {}),
+      },
+    };
+
+    try {
+      localStorage.setItem(SESSION_KEY, JSON.stringify(updatedSession));
+      setSession(updatedSession);
+    } catch (e) {
+      console.error('Failed to update tier in localStorage', e);
+    }
+    return updatedSession;
+  };
+
   return {
     session,
     role: session?.role || null,
+    tier: session?.tier || 'UNASSIGNED',
     isLoaded,
     login,
     logout,
+    updateTier,
   };
 }
