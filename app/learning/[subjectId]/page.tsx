@@ -9,10 +9,10 @@ import { Badge } from '@/components/ui/Badge';
 import { useUserSession } from '@/lib/store';
 import { mockData, Subject } from '@/lib/mockData';
 
-export default function SubjectViewPage() {
+export default function SubjectPage() {
   const router = useRouter();
   const params = useParams();
-  const { role, isLoaded } = useUserSession();
+  const { role, isLoaded, chapterTiers, globalTier } = useUserSession();
 
   const subjectId = (params?.subjectId as string) || 'math';
 
@@ -26,14 +26,13 @@ export default function SubjectViewPage() {
     return null;
   }
 
-  // Find subject matching params or fallback to first subject
   const currentSubject: Subject =
     mockData.subjects.find((s) => s.subject_id === subjectId) ||
     mockData.subjects[0];
 
   return (
-    <main className="min-h-screen p-6 max-w-6xl mx-auto flex flex-col gap-8">
-      {/* Header Bar with Doubt Scan & Profile Icon */}
+    <main className="min-h-screen p-6 max-w-5xl mx-auto flex flex-col gap-8">
+      {/* Header Bar */}
       <header className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-3xl bg-white/70 backdrop-blur border border-white/80">
         <div className="flex items-center gap-3">
           <Link href="/dashboard/student">
@@ -60,61 +59,69 @@ export default function SubjectViewPage() {
         </div>
       </header>
 
-      {/* Chapters & Horizontal Topic Cards Layout */}
-      <div className="flex flex-col gap-8">
-        {currentSubject.chapters.map((chapter, chapIdx) => (
-          <section key={chapter.chapter_id} className="flex flex-col gap-4">
-            <div className="flex items-center justify-between border-b border-gray-200 pb-2">
-              <div className="flex items-center gap-2">
-                <Badge variant="blue">Chapter {chapIdx + 1}</Badge>
-                <h2 className="text-2xl font-bold">{chapter.chapter_name}</h2>
-              </div>
-              <Badge variant="yellow">{chapter.topics.length} Topics</Badge>
-            </div>
+      {/* Subject Overview Card */}
+      <Card variant="white" className="p-6">
+        <h2 className="text-3xl font-bold color-primary mb-2">
+          {currentSubject.subject_name} Curriculum
+        </h2>
+        <p className="text-base text-gray-600">
+          Select a chapter below to view its adaptive learning modules, diagnostic assessment, and difficulty tiers.
+        </p>
+      </Card>
 
-            {/* Horizontal Row of Topic Cards */}
-            <div className="flex gap-6 overflow-x-auto pb-4 pt-2 snap-x">
-              {chapter.topics.map((topic, topIdx) => (
+      {/* Clean List of Chapter Cards */}
+      <section className="flex flex-col gap-6">
+        <h3 className="text-2xl font-bold color-primary">Chapters</h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {currentSubject.chapters.map((chapter, idx) => {
+            const chapterTierState = chapterTiers[chapter.chapter_id];
+            const isCompleted = chapterTierState === 'COMPLETED';
+
+            const totalTopicsCount =
+              chapter.beginnerTopics.length +
+              chapter.intermediateTopics.length +
+              chapter.advancedTopics.length;
+
+            return (
+              <Link
+                key={chapter.chapter_id}
+                href={`/learning/${currentSubject.subject_id}/${chapter.chapter_id}`}
+                className="no-underline"
+              >
                 <Card
-                  key={topic.topic_id}
                   variant="white"
                   interactive
-                  className="min-w-[280px] max-w-[320px] shrink-0 flex flex-col justify-between p-6 snap-start"
+                  className="h-full flex flex-col justify-between p-6 gap-6"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <Badge variant="purple">Topic {topIdx + 1}</Badge>
-                      <Badge variant={topic.is_completed ? 'green' : 'orange'}>
-                        {topic.is_completed ? '✓ Completed' : 'Diagnostic Pending'}
+                      <Badge variant="blue">Chapter {idx + 1}</Badge>
+                      <Badge variant={isCompleted ? 'green' : chapterTierState ? 'purple' : 'yellow'}>
+                        {isCompleted ? '🏆 Mastered' : chapterTierState ? `${chapterTierState} ACTIVE` : 'Diagnostic Ready'}
                       </Badge>
                     </div>
 
-                    <h3 className="text-xl font-bold mb-2">{topic.topic_name}</h3>
+                    <h4 className="text-2xl font-extrabold text-[var(--text-dark)] mb-2">
+                      {chapter.chapter_name}
+                    </h4>
+
                     <p className="text-sm opacity-80 mb-4">
-                      {topic.is_completed
-                        ? 'Mastered topic! Review diagnostic or lesson.'
-                        : '5-question baseline assessment ready.'}
+                      {totalTopicsCount} topics across Beginner, Intermediate, and Advanced tiers.
                     </p>
                   </div>
 
-                  <Link
-                    href={`/learning/${currentSubject.subject_id}/${chapter.chapter_id}/${topic.topic_id}/diagnostic`}
-                    className="no-underline w-full"
-                  >
-                    <Button
-                      variant={topic.is_completed ? 'white' : 'secondary'}
-                      size="md"
-                      className="w-full flex items-center justify-center"
-                    >
-                      🚀 Take Diagnostic Test
-                    </Button>
-                  </Link>
+                  <div className="flex justify-end pt-2 border-t border-gray-100">
+                    <span className="font-bold text-sm color-primary flex items-center gap-1">
+                      Enter Chapter Landing Page →
+                    </span>
+                  </div>
                 </Card>
-              ))}
-            </div>
-          </section>
-        ))}
-      </div>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
     </main>
   );
 }

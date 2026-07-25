@@ -1,13 +1,17 @@
-export interface Topic {
+export interface TieredTopic {
   topic_id: string;
   topic_name: string;
   is_completed: boolean;
+  is_quiz?: boolean;
 }
 
 export interface Chapter {
   chapter_id: string;
   chapter_name: string;
-  topics: Topic[];
+  beginnerTopics: TieredTopic[];
+  intermediateTopics: TieredTopic[];
+  advancedTopics: TieredTopic[];
+  topics?: TieredTopic[];
 }
 
 export interface Subject {
@@ -70,7 +74,7 @@ export const mockData = {
   student: {
     name: 'Alex Student',
     xp: 150,
-    tier: 'UNASSIGNED' as 'UNASSIGNED' | 'FOUNDATION' | 'BEGINNER' | 'ADVANCED',
+    tier: 'UNASSIGNED' as 'UNASSIGNED' | 'FOUNDATION' | 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED',
     overallProgress: 35,
     badges: ['Star Starter', 'Math Explorer']
   },
@@ -87,18 +91,36 @@ export const mockData = {
         {
           chapter_id: 'chap_01',
           chapter_name: 'Fractions & Decimals',
-          topics: [
-            { topic_id: 'top_01', topic_name: 'Adding Fractions', is_completed: false },
-            { topic_id: 'top_02', topic_name: 'LCM & GCD', is_completed: false },
-            { topic_id: 'top_03', topic_name: 'Decimals Conversion', is_completed: false }
+          beginnerTopics: [
+            { topic_id: 'top_beg_01', topic_name: 'Understanding Like Denominators', is_completed: false },
+            { topic_id: 'top_beg_02', topic_name: 'Adding Basic Fractions', is_completed: false },
+            { topic_id: 'quiz_beg_01', topic_name: 'Beginner Assessment Quiz', is_completed: false, is_quiz: true }
+          ],
+          intermediateTopics: [
+            { topic_id: 'top_int_01', topic_name: 'Finding Least Common Denominators (LCM)', is_completed: false },
+            { topic_id: 'top_int_02', topic_name: 'Adding Fractions with Unlike Denominators', is_completed: false },
+            { topic_id: 'quiz_int_01', topic_name: 'Intermediate Assessment Quiz', is_completed: false, is_quiz: true }
+          ],
+          advancedTopics: [
+            { topic_id: 'top_adv_01', topic_name: 'Mixed Numbers Addition & Simplification', is_completed: false },
+            { topic_id: 'top_adv_02', topic_name: 'Word Problems & Real-world Fractions', is_completed: false },
+            { topic_id: 'quiz_adv_01', topic_name: 'Advanced Chapter Mastery Quiz', is_completed: false, is_quiz: true }
           ]
         },
         {
           chapter_id: 'chap_02',
           chapter_name: 'Geometry Basics',
-          topics: [
-            { topic_id: 'top_04', topic_name: 'Angles & Triangles', is_completed: false },
-            { topic_id: 'top_05', topic_name: 'Perimeter & Area', is_completed: false }
+          beginnerTopics: [
+            { topic_id: 'top_beg_03', topic_name: 'Identifying Lines & Rays', is_completed: false },
+            { topic_id: 'quiz_beg_02', topic_name: 'Beginner Geometry Quiz', is_completed: false, is_quiz: true }
+          ],
+          intermediateTopics: [
+            { topic_id: 'top_int_03', topic_name: 'Measuring Acute & Obtuse Angles', is_completed: false },
+            { topic_id: 'quiz_int_02', topic_name: 'Intermediate Geometry Quiz', is_completed: false, is_quiz: true }
+          ],
+          advancedTopics: [
+            { topic_id: 'top_adv_03', topic_name: 'Perimeter & Area Word Problems', is_completed: false },
+            { topic_id: 'quiz_adv_02', topic_name: 'Advanced Geometry Mastery Quiz', is_completed: false, is_quiz: true }
           ]
         }
       ]
@@ -114,9 +136,17 @@ export const mockData = {
         {
           chapter_id: 'chap_03',
           chapter_name: 'States of Matter',
-          topics: [
-            { topic_id: 'top_06', topic_name: 'Solids, Liquids, Gases', is_completed: false },
-            { topic_id: 'top_07', topic_name: 'Evaporation & Condensation', is_completed: false }
+          beginnerTopics: [
+            { topic_id: 'top_beg_04', topic_name: 'Solids vs Liquids', is_completed: false },
+            { topic_id: 'quiz_beg_03', topic_name: 'Matter Basics Quiz', is_completed: false, is_quiz: true }
+          ],
+          intermediateTopics: [
+            { topic_id: 'top_int_04', topic_name: 'Gases & Molecular Motion', is_completed: false },
+            { topic_id: 'quiz_int_03', topic_name: 'Intermediate Matter Quiz', is_completed: false, is_quiz: true }
+          ],
+          advancedTopics: [
+            { topic_id: 'top_adv_04', topic_name: 'Evaporation & Condensation Curves', is_completed: false },
+            { topic_id: 'quiz_adv_03', topic_name: 'Advanced Physics Mastery Quiz', is_completed: false, is_quiz: true }
           ]
         }
       ]
@@ -132,9 +162,17 @@ export const mockData = {
         {
           chapter_id: 'chap_04',
           chapter_name: 'Grammar & Vocabulary',
-          topics: [
-            { topic_id: 'top_08', topic_name: 'Nouns & Verbs', is_completed: true },
-            { topic_id: 'top_09', topic_name: 'Synonyms & Antonyms', is_completed: true }
+          beginnerTopics: [
+            { topic_id: 'top_beg_05', topic_name: 'Nouns & Pronouns', is_completed: true },
+            { topic_id: 'quiz_beg_04', topic_name: 'Grammar Foundations Quiz', is_completed: true, is_quiz: true }
+          ],
+          intermediateTopics: [
+            { topic_id: 'top_int_05', topic_name: 'Action Verbs & Tenses', is_completed: false },
+            { topic_id: 'quiz_int_04', topic_name: 'Intermediate Verbs Quiz', is_completed: false, is_quiz: true }
+          ],
+          advancedTopics: [
+            { topic_id: 'top_adv_05', topic_name: 'Complex Sentences & Context Clues', is_completed: false },
+            { topic_id: 'quiz_adv_04', topic_name: 'Advanced Literacy Mastery Quiz', is_completed: false, is_quiz: true }
           ]
         }
       ]
@@ -147,9 +185,17 @@ export const mockData = {
       {
         chapter_id: "chap_01",
         chapter_name: "Fractions",
-        topics: [
+        beginnerTopics: [
           { topic_id: "top_01", topic_name: "Adding Fractions", is_completed: false },
-          { topic_id: "top_02", topic_name: "LCM", is_completed: false }
+          { topic_id: "quiz_beg_01", topic_name: "Beginner Quiz", is_completed: false, is_quiz: true }
+        ],
+        intermediateTopics: [
+          { topic_id: "top_02", topic_name: "LCM & GCD", is_completed: false },
+          { topic_id: "quiz_int_01", topic_name: "Intermediate Quiz", is_completed: false, is_quiz: true }
+        ],
+        advancedTopics: [
+          { topic_id: "top_03", topic_name: "Mixed Numbers", is_completed: false },
+          { topic_id: "quiz_adv_01", topic_name: "Advanced Quiz", is_completed: false, is_quiz: true }
         ]
       }
     ]

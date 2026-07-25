@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 
 export type Role = 'STUDENT' | 'TEACHER' | 'ADMIN';
-export type Tier = 'UNASSIGNED' | 'FOUNDATION' | 'BEGINNER' | 'ADVANCED';
+export type Tier = 'UNASSIGNED' | 'FOUNDATION' | 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+export type ChapterTierState = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'COMPLETED';
 
 export interface UserSession {
   id: string;
@@ -12,6 +13,7 @@ export interface UserSession {
   instituteId: string;
   tier?: Tier;
   topicDiagnostics?: Record<string, { tier: Tier; completedAt: string }>;
+  chapterTiers?: Record<string, ChapterTierState>;
 }
 
 const SESSION_KEY = 'brainbee_user_session';
@@ -49,6 +51,12 @@ export function useUserSession() {
       instituteId: 'inst_01',
       tier: 'UNASSIGNED',
       topicDiagnostics: {},
+      chapterTiers: {
+        chap_01: 'BEGINNER',
+        chap_02: 'BEGINNER',
+        chap_03: 'BEGINNER',
+        chap_04: 'INTERMEDIATE',
+      },
     };
 
     try {
@@ -71,12 +79,21 @@ export function useUserSession() {
 
   const updateTier = (tier: Tier, topicId?: string) => {
     if (!session) return;
+    
+    // Map assigned student tier to active chapter tier
+    const chapterTierState: ChapterTierState =
+      tier === 'ADVANCED' ? 'ADVANCED' : tier === 'BEGINNER' ? 'INTERMEDIATE' : 'BEGINNER';
+
     const updatedSession: UserSession = {
       ...session,
       tier: tier,
       topicDiagnostics: {
         ...(session.topicDiagnostics || {}),
         ...(topicId ? { [topicId]: { tier, completedAt: new Date().toISOString() } } : {}),
+      },
+      chapterTiers: {
+        ...(session.chapterTiers || {}),
+        chap_01: chapterTierState,
       },
     };
 
@@ -89,13 +106,45 @@ export function useUserSession() {
     return updatedSession;
   };
 
+  const completeQuiz = (chapterId: string, quizLevel: 'beginner' | 'intermediate' | 'advanced') => {
+    if (!session) return;
+    const currentTiers = session.chapterTiers || {};
+    let nextState: ChapterTierState = 'INTERMEDIATE';
+
+    if (quizLevel === 'beginner') {
+      nextState = 'INTERMEDIATE';
+    } else if (quizLevel === 'intermediate') {
+      nextState = 'ADVANCED';
+    } else if (quizLevel === 'advanced') {
+      nextState = 'COMPLETED';
+    }
+
+    const updatedSession: UserSession = {
+      ...session,
+      chapterTiers: {
+        ...currentTiers,
+        [chapterId]: nextState,
+      },
+    };
+
+    try {
+      localStorage.setItem(SESSION_KEY, JSON.stringify(updatedSession));
+      setSession(updatedSession);
+    } catch (e) {
+      console.error('Failed to update chapter tier progression in localStorage', e);
+    }
+    return nextState;
+  };
+
   return {
     session,
     role: session?.role || null,
     tier: session?.tier || 'UNASSIGNED',
+    chapterTiers: session?.chapterTiers || {},
     isLoaded,
     login,
     logout,
     updateTier,
+    completeQuiz,
   };
 }
