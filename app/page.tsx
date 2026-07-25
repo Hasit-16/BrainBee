@@ -1,61 +1,84 @@
-import React from 'react';
+'use client';
+
+import React, { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
-import { ProgressBar } from '@/components/ui/ProgressBar';
-import { mockData } from '@/lib/mockData';
+import { useUserSession, Role } from '@/lib/store';
 
-export default function Home() {
+export default function LoginPage() {
+  const router = useRouter();
+  const { role, isLoaded, login } = useUserSession();
+
+  useEffect(() => {
+    if (isLoaded && role) {
+      router.push(`/dashboard/${role.toLowerCase()}`);
+    }
+  }, [isLoaded, role, router]);
+
+  const handleRoleLogin = (selectedRole: Role) => {
+    login(selectedRole);
+    router.push(`/dashboard/${selectedRole.toLowerCase()}`);
+  };
+
   return (
-    <main style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
-      {/* Header Badge */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div className="logo-text" style={{ fontSize: '2rem', fontWeight: 700 }}>
-            <span>B</span><span>r</span><span>a</span><span>i</span><span>n</span><span>B</span><span>e</span><span>e</span>
+    <main className="min-h-screen flex flex-col items-center justify-center p-6">
+      <div className="w-full max-w-xl">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-2 mb-2">
+            <h1 className="text-4xl font-bold color-primary">
+              BrainBee
+            </h1>
+            <Badge variant="yellow">PWA</Badge>
           </div>
-          <Badge variant="blue">Adaptive LMS</Badge>
+          <p className="text-lg">
+            Adaptive Learning Management System
+          </p>
         </div>
-        <Badge variant="yellow">⭐ {mockData.student.xp} XP</Badge>
-      </div>
 
-      {/* Main Welcome Card */}
-      <Card variant="white" style={{ marginBottom: '2rem' }}>
-        <Badge variant="yellow" style={{ marginBottom: '1rem', fontWeight: 700 }}>
-          🚀 Grade 5 Mathematics
-        </Badge>
-        <h1 style={{ fontSize: '2.5rem', marginBottom: '0.5rem', color: 'var(--clay-blue)' }}>
-          Welcome to BrainBee!
-        </h1>
-        <p style={{ marginBottom: '1.5rem', fontSize: '1.1rem' }}>
-          Your personalized, adaptive learning journey starts here. Explore 10-minute micro-lessons tailored to your cognitive tier.
-        </p>
-
-        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-          <Button variant="secondary" size="lg">
-            Start Learning
-          </Button>
-          <Button variant="white" size="lg">
-            Diagnostic Test
-          </Button>
-        </div>
-      </Card>
-
-      {/* Curriculum Grid Preview */}
-      <h2 style={{ marginBottom: '1rem', color: 'var(--text-dark)' }}>Current Curriculum Overview</h2>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
-        {mockData.curriculum.chapters.map((chap) => (
-          <Card key={chap.chapter_id} variant="blue" interactive>
-            <Badge variant="yellow" style={{ marginBottom: '0.75rem' }}>
-              {mockData.curriculum.subject}
+        <Card variant="white">
+          <div className="text-center mb-6">
+            <Badge variant="blue" className="mb-3">
+              Portal Access
             </Badge>
-            <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>{chap.chapter_name}</h3>
-            <p style={{ fontSize: '0.95rem', marginBottom: '1rem' }}>
-              {chap.topics.length} Adaptive Topics Available
+            <h2 className="text-2xl font-bold mb-2">
+              Select Your Role to Login
+            </h2>
+            <p className="text-sm">
+              Click any of the options below to initiate your active session.
             </p>
-            <ProgressBar progressPercentage={0} label="Chapter Progress" />
-          </Card>
-        ))}
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <Button
+              variant="secondary"
+              size="lg"
+              className="w-full flex items-center justify-center"
+              onClick={() => handleRoleLogin('STUDENT')}
+            >
+              🎓 Login as Student
+            </Button>
+
+            <Button
+              variant="primary"
+              size="lg"
+              className="w-full flex items-center justify-center"
+              onClick={() => handleRoleLogin('TEACHER')}
+            >
+              👩‍🏫 Login as Teacher
+            </Button>
+
+            <Button
+              variant="orange"
+              size="lg"
+              className="w-full flex items-center justify-center"
+              onClick={() => handleRoleLogin('ADMIN')}
+            >
+              ⚙️ Login as Admin
+            </Button>
+          </div>
+        </Card>
       </div>
     </main>
   );
