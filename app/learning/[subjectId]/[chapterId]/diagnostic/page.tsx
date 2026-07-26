@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
@@ -9,27 +9,70 @@ import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { useUserSession, Tier } from '@/lib/store';
 import { diagnosticQuestions } from '@/lib/mockData';
+import { createClient, CURRENT_USER_ID } from '@/lib/supabase/client';
 
 export default function ChapterDiagnosticPage() {
   const router = useRouter();
   const params = useParams();
-  const { role, isLoaded, updateTier } = useUserSession();
+  const { role, isLoaded, updateTier, chapterTiers } = useUserSession();
 
   const subjectId = (params?.subjectId as string) || 'math';
   const chapterId = (params?.chapterId as string) || 'chap_01';
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
-  const [isCompleted, setIsCompleted] = useState(false);
-  const [assignedTier, setAssignedTier] = useState<Tier>('UNASSIGNED');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGuarded, setIsGuarded] = useState(false);
 
+  const hasCheckedGuardRef = useRef(false);
+
+  // STEP 4: PERMANENT ROUTE GUARDING
   useEffect(() => {
-    if (isLoaded && role !== 'STUDENT') {
-      router.push('/');
-    }
-  }, [isLoaded, role, router]);
+    if (!isLoaded || hasCheckedGuardRef.current) return;
+    hasCheckedGuardRef.current = true;
 
-  if (!isLoaded || role !== 'STUDENT') {
+    if (role !== 'STUDENT') {
+      router.push('/');
+      return;
+    }
+
+    async function checkDiagnosticGuard() {
+      // 1. Check local session tier state first
+      const localTier = chapterTiers?.[chapterId];
+      if (localTier && (localTier as string) !== 'UNASSIGNED') {
+        setIsGuarded(true);
+        const targetUrl = `/learning/${subjectId}/${chapterId}`;
+        try { router.push(targetUrl); } catch (e) {}
+        window.location.href = targetUrl;
+        return;
+      }
+
+      // 2. Query Supabase chapter_tiers table
+      try {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from('chapter_tiers')
+          .select('assigned_tier')
+          .eq('user_id', CURRENT_USER_ID)
+          .eq('chapter_id', chapterId)
+          .maybeSingle();
+
+        if (data && data.assigned_tier) {
+          setIsGuarded(true);
+          const targetUrl = `/learning/${subjectId}/${chapterId}`;
+          try { router.push(targetUrl); } catch (e) {}
+          window.location.href = targetUrl;
+          return;
+        }
+      } catch (e) {
+        console.warn('Diagnostic route guard notice: proceeding with evaluation');
+      }
+    }
+
+    checkDiagnosticGuard();
+  }, [isLoaded, role, router, subjectId, chapterId, chapterTiers]);
+
+  if (!isLoaded || role !== 'STUDENT' || isGuarded) {
     return null;
   }
 
@@ -50,13 +93,12 @@ export default function ChapterDiagnosticPage() {
     }
   };
 
-  const handlePrev = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
-    }
-  };
+  // STEP 3 & STEP 5: SCORING ALGORITHM, SUPABASE MUTATION & SUCCESS REDIRECT
+  const handleSubmit = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
-  const handleSubmit = () => {
+    // 1. Calculate cumulative score from binary scoring (0 or question.points)
     let totalPoints = 0;
     diagnosticQuestions.forEach((q, idx) => {
       if (selectedAnswers[idx] === q.correct_index) {
@@ -64,40 +106,42 @@ export default function ChapterDiagnosticPage() {
       }
     });
 
-    let tier: Tier = 'FOUNDATION';
+    // 2. Map score strictly to database constraints:
+    // 0–200 pts -> 'BEGINNER'
+    // 201–450 pts -> 'INTERMEDIATE'
+    // 451–550 pts -> 'ADVANCED'
+    let assignedTierStr: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' = 'BEGINNER';
     if (totalPoints > 450) {
-      tier = 'ADVANCED';
+      assignedTierStr = 'ADVANCED';
     } else if (totalPoints > 200) {
-      tier = 'BEGINNER';
+      assignedTierStr = 'INTERMEDIATE';
     } else {
-      tier = 'FOUNDATION';
+      assignedTierStr = 'BEGINNER';
     }
 
-    updateTier(tier, chapterId);
-    setAssignedTier(tier);
-    setIsCompleted(true);
-  };
-
-  const getTierColor = (tier: Tier) => {
-    switch (tier) {
-      case 'ADVANCED':
-        return 'purple';
-      case 'BEGINNER':
-        return 'green';
-      default:
-        return 'yellow';
+    // 3. Supabase INSERT / UPSERT into chapter_tiers
+    try {
+      const supabase = createClient();
+      await supabase.from('chapter_tiers').upsert({
+        user_id: CURRENT_USER_ID,
+        subject_id: subjectId,
+        chapter_id: chapterId,
+        assigned_tier: assignedTierStr,
+        created_at: new Date().toISOString(),
+      });
+    } catch (e) {
+      console.warn('Supabase chapter_tiers write notice: proceeding with local session state');
     }
-  };
 
-  const getTierBadgeIcon = (tier: Tier) => {
-    switch (tier) {
-      case 'ADVANCED':
-        return '🚀';
-      case 'BEGINNER':
-        return '🌟';
-      default:
-        return '🌱';
-    }
+    // Update local state
+    updateTier(assignedTierStr as Tier, chapterId);
+
+    // 4. STEP 5: Immediately execute router.push to Chapter Landing Page
+    const targetUrl = `/learning/${subjectId}/${chapterId}`;
+    try {
+      router.push(targetUrl);
+    } catch (e) {}
+    window.location.href = targetUrl;
   };
 
   return (
@@ -112,9 +156,9 @@ export default function ChapterDiagnosticPage() {
           </Link>
           <div>
             <h1 className="text-xl font-bold color-primary">
-              Chapter Diagnostic Assessment
+              Chapter Diagnostic Evaluation
             </h1>
-            <p className="text-xs opacity-75 font-medium">5-Question Baseline Assessment</p>
+            <p className="text-xs opacity-75 font-medium">5-Question Baseline Probe</p>
           </div>
         </div>
 
@@ -128,115 +172,74 @@ export default function ChapterDiagnosticPage() {
         </div>
       </header>
 
-      {/* Main Diagnostic Loop */}
-      {!isCompleted ? (
-        <Card variant="white" className="flex flex-col gap-6 p-8">
-          <div>
-            <div className="flex justify-between items-center text-sm font-bold mb-2">
-              <span>Assessment Progress</span>
-              <span className="color-primary">{progressPercent}%</span>
-            </div>
-            <ProgressBar progressPercentage={progressPercent} />
+      {/* Main Diagnostic Quiz UI */}
+      <Card variant="white" className="flex flex-col gap-6 p-8">
+        <div>
+          <div className="flex justify-between items-center text-sm font-bold mb-2">
+            <span>Diagnostic Progress</span>
+            <span className="color-primary">{progressPercent}%</span>
+          </div>
+          <ProgressBar progressPercentage={progressPercent} />
+        </div>
+
+        <div className="pt-2">
+          <div className="flex items-center justify-between mb-3">
+            <Badge variant="yellow">
+              Question {currentIndex + 1} ({currentQuestion.points} pts)
+            </Badge>
+            <Badge variant="orange">No Retries</Badge>
           </div>
 
-          <div className="pt-2">
-            <Badge variant="yellow" className="mb-3">
-              Question {currentIndex + 1}
-            </Badge>
-            <h2 className="text-2xl font-bold mb-6">
-              {currentQuestion.text}
-            </h2>
+          <h2 className="text-2xl font-bold text-[var(--text-dark)] mb-6">
+            {currentQuestion.text}
+          </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              {currentQuestion.options.map((option, optIdx) => {
-                const isSelected = selectedAnswers[currentIndex] === optIdx;
-                return (
-                  <Button
-                    key={optIdx}
-                    variant={isSelected ? 'secondary' : 'white'}
-                    size="lg"
-                    className="w-full text-left flex items-center gap-3 p-4 justify-start"
-                    onClick={() => handleOptionSelect(optIdx)}
-                  >
-                    <span className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center font-bold text-sm shrink-0">
-                      {String.fromCharCode(65 + optIdx)}
-                    </span>
-                    <span className="text-lg font-bold">{option}</span>
-                  </Button>
-                );
-              })}
-            </div>
-
-            <div className="flex justify-between items-center border-t border-gray-100 pt-6">
-              <Button
-                variant="white"
-                size="md"
-                onClick={handlePrev}
-                disabled={currentIndex === 0}
-              >
-                Previous
-              </Button>
-
-              {currentIndex < totalQuestions - 1 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            {currentQuestion.options.map((option, optIdx) => {
+              const isSelected = selectedAnswers[currentIndex] === optIdx;
+              return (
                 <Button
-                  variant="primary"
-                  size="md"
-                  onClick={handleNext}
-                  disabled={selectedAnswers[currentIndex] === undefined}
-                >
-                  Next Question →
-                </Button>
-              ) : (
-                <Button
-                  variant="secondary"
+                  key={optIdx}
+                  variant={isSelected ? 'secondary' : 'white'}
                   size="lg"
-                  onClick={handleSubmit}
-                  disabled={selectedAnswers[currentIndex] === undefined}
+                  className="w-full text-left flex items-center gap-3 p-4 justify-start cursor-pointer"
+                  onClick={() => handleOptionSelect(optIdx)}
                 >
-                  Submit Assessment ✨
+                  <span className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center font-bold text-sm shrink-0">
+                    {String.fromCharCode(65 + optIdx)}
+                  </span>
+                  <span className="text-lg font-bold">{option}</span>
                 </Button>
-              )}
-            </div>
-          </div>
-        </Card>
-      ) : (
-        /* Gamified Completion Card */
-        <Card variant="white" className="flex flex-col items-center text-center p-10 gap-6">
-          <div className="text-6xl animate-bounce">
-            {getTierBadgeIcon(assignedTier)}
+              );
+            })}
           </div>
 
-          <div>
-            <Badge variant="green" className="mb-3">
-              Diagnostic Complete!
-            </Badge>
-            <h2 className="text-3xl font-extrabold color-primary mb-2">
-              Level Assessment Unlocked
-            </h2>
-            <p className="text-base opacity-85 max-w-lg mx-auto">
-              Your diagnostic has evaluated your knowledge. Your personalized learning tier for this chapter is ready!
-            </p>
+          {/* Action Bar (NO Backward Navigation) */}
+          <div className="flex justify-end items-center border-t border-gray-100 pt-6">
+            {currentIndex < totalQuestions - 1 ? (
+              <Button
+                variant="primary"
+                size="md"
+                onClick={handleNext}
+                disabled={selectedAnswers[currentIndex] === undefined}
+                className="cursor-pointer"
+              >
+                Next Question →
+              </Button>
+            ) : (
+              <Button
+                variant="secondary"
+                size="lg"
+                onClick={handleSubmit}
+                disabled={selectedAnswers[currentIndex] === undefined || isSubmitting}
+                className="cursor-pointer"
+              >
+                {isSubmitting ? 'Evaluating...' : 'Submit Diagnostic ✨'}
+              </Button>
+            )}
           </div>
-
-          <div className="p-6 rounded-3xl border border-gray-100 bg-gray-50 flex flex-col items-center gap-2">
-            <span className="text-sm font-bold opacity-70 uppercase tracking-wider">
-              Assigned Cognitive Tier
-            </span>
-            <Badge variant={getTierColor(assignedTier)} className="text-2xl px-6 py-2">
-              {assignedTier} TIER
-            </Badge>
-          </div>
-
-          <Link
-            href={`/learning/${subjectId}/${chapterId}`}
-            className="no-underline w-full max-w-sm"
-          >
-            <Button variant="secondary" size="lg" className="w-full flex justify-center">
-              Proceed to Chapter Landing Page 🚀
-            </Button>
-          </Link>
-        </Card>
-      )}
+        </div>
+      </Card>
     </main>
   );
 }
