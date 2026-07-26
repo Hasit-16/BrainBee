@@ -7,8 +7,9 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
-import { useUserSession } from '@/lib/store';
+import { useUserSession, saveQuizCache, getQuizCache, clearQuizCache } from '@/lib/store';
 import { quizQuestions, QuizQuestion } from '@/lib/mockData';
+import { createClient, CURRENT_USER_ID } from '@/lib/supabase/client';
 
 export default function TwoPassQuizPage() {
   const router = useRouter();
@@ -19,7 +20,8 @@ export default function TwoPassQuizPage() {
     completeQuiz,
     saveQuizProgress,
     getQuizProgress,
-    clearQuizProgress,
+    clearQuizProgress: clearStoreProgress,
+    completedQuizTopics,
   } = useUserSession();
 
   const subjectId = (params?.subjectId as string) || 'math';
@@ -37,10 +39,11 @@ export default function TwoPassQuizPage() {
   const [showSecondPassSolution, setShowSecondPassSolution] = useState(false);
   const [isQuizFinished, setIsQuizFinished] = useState(false);
   const [perfectScoreFirstPass, setPerfectScoreFirstPass] = useState(false);
+  const [isGuarded, setIsGuarded] = useState(false);
 
   const hasInitializedRef = useRef(false);
 
-  // MOUNT INITIALIZATION (Runs strictly ONCE per page load)
+  // STEP 2: ENFORCE QUIZ ROUTE GUARDING
   useEffect(() => {
     if (!isLoaded || hasInitializedRef.current) return;
     hasInitializedRef.current = true;
@@ -50,34 +53,85 @@ export default function TwoPassQuizPage() {
       return;
     }
 
-    // Check if saved pause state exists for this topic
-    const saved = getQuizProgress(topicId);
-    if (
-      saved &&
-      saved.isIntermission === true &&
-      Array.isArray(saved.retryPass) &&
-      saved.retryPass.length > 0
-    ) {
-      setRetryPass(saved.retryPass);
-      setIsIntermission(true);
-    } else {
-      // Fresh start: Clear any stale retry state and initialize Round 1
-      clearQuizProgress(topicId);
+    async function verifyRouteGuard() {
+      // 1. Check local session completion first for instant guard
+      const isLocallyCompleted = Boolean(completedQuizTopics?.[topicId]);
+      if (isLocallyCompleted) {
+        setIsGuarded(true);
+        clearQuizCache(topicId);
+        clearStoreProgress(topicId);
+        const targetUrl = `/learning/${subjectId}/${chapterId}`;
+        try { router.push(targetUrl); } catch (e) {}
+        window.location.href = targetUrl;
+        return;
+      }
+
+      // 2. Query Supabase topic_progress for server-side route guard
       try {
-        localStorage.removeItem(`brainbee_quiz_retry_${topicId}`);
-      } catch (e) {}
+        const supabase = createClient();
+        const { data } = await supabase
+          .from('topic_progress')
+          .select('is_completed')
+          .eq('user_id', CURRENT_USER_ID)
+          .eq('topic_id', topicId)
+          .maybeSingle();
 
-      setRetryPass([]);
-      setIsIntermission(false);
-      setIsSecondPass(false);
-      setCurrentIndex(0);
-      setSelectedOption(null);
-      setShowSecondPassSolution(false);
-      setIsQuizFinished(false);
+        if (data && data.is_completed === true) {
+          setIsGuarded(true);
+          clearQuizCache(topicId);
+          clearStoreProgress(topicId);
+          const targetUrl = `/learning/${subjectId}/${chapterId}`;
+          try { router.push(targetUrl); } catch (e) {}
+          window.location.href = targetUrl;
+          return;
+        }
+      } catch (e) {
+        console.warn('Route guard notice: proceeding with standard mount');
+      }
+
+      // 3. If NOT completed, check for mid-quiz cache
+      const cachedState = getQuizCache(topicId);
+      if (cachedState && typeof cachedState === 'object') {
+        if (Array.isArray(cachedState.retryPass)) {
+          setRetryPass(cachedState.retryPass);
+        }
+        if (typeof cachedState.currentIndex === 'number') {
+          setCurrentIndex(cachedState.currentIndex);
+        }
+        if (typeof cachedState.isSecondPass === 'boolean') {
+          setIsSecondPass(cachedState.isSecondPass);
+        }
+        if (typeof cachedState.isIntermission === 'boolean') {
+          setIsIntermission(cachedState.isIntermission);
+        }
+      } else {
+        const saved = getQuizProgress(topicId);
+        if (
+          saved &&
+          saved.isIntermission === true &&
+          Array.isArray(saved.retryPass) &&
+          saved.retryPass.length > 0
+        ) {
+          setRetryPass(saved.retryPass);
+          setIsIntermission(true);
+        } else {
+          clearQuizCache(topicId);
+          clearStoreProgress(topicId);
+          setRetryPass([]);
+          setIsIntermission(false);
+          setIsSecondPass(false);
+          setCurrentIndex(0);
+          setSelectedOption(null);
+          setShowSecondPassSolution(false);
+          setIsQuizFinished(false);
+        }
+      }
     }
-  }, [isLoaded, role, router, topicId]);
 
-  if (!isLoaded || role !== 'STUDENT') {
+    verifyRouteGuard();
+  }, [isLoaded, role, router, topicId, chapterId, subjectId, completedQuizTopics, clearStoreProgress, getQuizProgress]);
+
+  if (!isLoaded || role !== 'STUDENT' || isGuarded) {
     return null;
   }
 
@@ -97,12 +151,18 @@ export default function TwoPassQuizPage() {
         setRetryPass(newRetryQueue);
       }
 
+      saveQuizCache(topicId, {
+        retryPass: newRetryQueue,
+        currentIndex: currentIndex + 1,
+        isSecondPass: false,
+        isIntermission: currentIndex === initialPass.length - 1 && newRetryQueue.length > 0,
+      });
+
       setTimeout(() => {
         if (currentIndex < initialPass.length - 1) {
           setCurrentIndex((prev) => prev + 1);
           setSelectedOption(null);
         } else {
-          // FIRST PASS COMPLETION
           if (newRetryQueue.length === 0) {
             setPerfectScoreFirstPass(true);
             finishQuiz();
@@ -114,6 +174,13 @@ export default function TwoPassQuizPage() {
       }, 400);
     } else {
       // SECOND PASS LOGIC
+      saveQuizCache(topicId, {
+        retryPass,
+        currentIndex,
+        isSecondPass: true,
+        isIntermission: false,
+      });
+
       if (isCorrect) {
         setTimeout(() => {
           advanceSecondPass();
@@ -129,7 +196,14 @@ export default function TwoPassQuizPage() {
     setShowSecondPassSolution(false);
 
     if (currentIndex < retryPass.length - 1) {
-      setCurrentIndex((prev) => prev + 1);
+      const nextIndex = currentIndex + 1;
+      setCurrentIndex(nextIndex);
+      saveQuizCache(topicId, {
+        retryPass,
+        currentIndex: nextIndex,
+        isSecondPass: true,
+        isIntermission: false,
+      });
     } else {
       finishQuiz();
     }
@@ -141,6 +215,13 @@ export default function TwoPassQuizPage() {
     setCurrentIndex(0);
     setSelectedOption(null);
     setShowSecondPassSolution(false);
+
+    saveQuizCache(topicId, {
+      retryPass,
+      currentIndex: 0,
+      isSecondPass: true,
+      isIntermission: false,
+    });
   };
 
   const handleGoToChapter = () => {
@@ -153,15 +234,39 @@ export default function TwoPassQuizPage() {
 
   const handleExitOnIntermission = () => {
     saveQuizProgress(topicId, retryPass);
+    saveQuizCache(topicId, {
+      retryPass,
+      currentIndex,
+      isSecondPass: false,
+      isIntermission: true,
+    });
     handleGoToChapter();
   };
 
-  // COMPLETION CLEANUP
-  const finishQuiz = () => {
-    clearQuizProgress(topicId);
+  // COMPLETION LOGIC
+  const finishQuiz = async () => {
     try {
-      localStorage.removeItem(`brainbee_quiz_retry_${topicId}`);
-    } catch (e) {}
+      const supabase = createClient();
+      await supabase.from('topic_progress').upsert({
+        user_id: CURRENT_USER_ID,
+        topic_id: topicId,
+        is_completed: true,
+        updated_at: new Date().toISOString(),
+      });
+
+      await supabase.from('quiz_results').insert({
+        user_id: CURRENT_USER_ID,
+        topic_id: topicId,
+        subject_id: subjectId,
+        chapter_id: chapterId,
+        completed_at: new Date().toISOString(),
+      });
+    } catch (e) {
+      console.warn('Supabase completion write notice: proceeding with local session state');
+    }
+
+    clearQuizCache(topicId);
+    clearStoreProgress(topicId);
 
     setRetryPass([]);
     setIsIntermission(false);

@@ -28,6 +28,43 @@ export interface UserSession {
 
 const SESSION_KEY = 'brainbee_user_session';
 
+export function saveQuizCache(topicId: string, state: object) {
+  try {
+    const key = `brainbee_quiz_cache_${topicId}`;
+    localStorage.setItem(key, JSON.stringify({
+      topicId,
+      state,
+      timestamp: new Date().toISOString()
+    }));
+  } catch (e) {
+    console.error('Failed to save quiz cache to localStorage', e);
+  }
+}
+
+export function getQuizCache(topicId: string): any {
+  try {
+    const key = `brainbee_quiz_cache_${topicId}`;
+    const item = localStorage.getItem(key);
+    if (item) {
+      const parsed = JSON.parse(item);
+      return parsed.state || parsed;
+    }
+  } catch (e) {
+    console.error('Failed to get quiz cache from localStorage', e);
+  }
+  return null;
+}
+
+export function clearQuizCache(topicId: string) {
+  try {
+    const key = `brainbee_quiz_cache_${topicId}`;
+    localStorage.removeItem(key);
+    localStorage.removeItem(`brainbee_quiz_retry_${topicId}`);
+  } catch (e) {
+    console.error('Failed to clear quiz cache from localStorage', e);
+  }
+}
+
 export function useUserSession() {
   const [session, setSession] = useState<UserSession | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -194,8 +231,8 @@ export function useUserSession() {
   };
 
   const clearQuizProgress = (topicId: string) => {
+    clearQuizCache(topicId);
     try {
-      localStorage.removeItem(`brainbee_quiz_retry_${topicId}`);
       const stored = localStorage.getItem(SESSION_KEY);
       if (stored) {
         const parsed: UserSession = JSON.parse(stored);

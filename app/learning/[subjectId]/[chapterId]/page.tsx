@@ -9,22 +9,47 @@ import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { useUserSession, ChapterTierState } from '@/lib/store';
 import { mockData, Subject, Chapter } from '@/lib/mockData';
+import { createClient, CURRENT_USER_ID } from '@/lib/supabase/client';
 
 export default function ChapterLandingPage() {
   const router = useRouter();
   const params = useParams();
-  const { role, isLoaded, chapterTiers, completeQuiz, tier: globalTier, session } = useUserSession();
+  const { role, isLoaded, chapterTiers, completeQuiz } = useUserSession();
 
   const subjectId = (params?.subjectId as string) || 'math';
   const chapterId = (params?.chapterId as string) || 'chap_01';
 
   const [completedModalOpen, setCompletedModalOpen] = useState(false);
+  const [supabaseTier, setSupabaseTier] = useState<string | null>(null);
 
   useEffect(() => {
     if (isLoaded && role !== 'STUDENT') {
       router.push('/');
     }
   }, [isLoaded, role, router]);
+
+  // STEP 3: Fetch assigned tier from Supabase chapter_tiers for CURRENT_USER_ID, subjectId, and chapterId
+  useEffect(() => {
+    async function fetchChapterTier() {
+      try {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from('chapter_tiers')
+          .select('assigned_tier')
+          .eq('user_id', CURRENT_USER_ID)
+          .eq('subject_id', subjectId)
+          .eq('chapter_id', chapterId)
+          .maybeSingle();
+
+        if (data && data.assigned_tier) {
+          setSupabaseTier(data.assigned_tier);
+        }
+      } catch (e) {
+        console.warn('Supabase fetch notice: falling back to local session state');
+      }
+    }
+    fetchChapterTier();
+  }, [subjectId, chapterId]);
 
   if (!isLoaded || role !== 'STUDENT') {
     return null;
@@ -38,15 +63,14 @@ export default function ChapterLandingPage() {
     currentSubject.chapters.find((c) => c.chapter_id === chapterId) ||
     currentSubject.chapters[0];
 
-  // STEP 2 FIX: Check localStorage for Chapter Tier explicitly.
-  // If tier is null, undefined, or missing, default to Pre-Diagnostic State.
-  const storedChapterTier = chapterTiers?.[chapterId];
+  // Supabase tier primary, fallback to LocalStorage session
+  const activeTier = supabaseTier || chapterTiers?.[chapterId];
   const hasDiagnosticBeenTaken =
-    storedChapterTier !== undefined &&
-    storedChapterTier !== null &&
-    (storedChapterTier as string) !== 'UNASSIGNED';
+    activeTier !== undefined &&
+    activeTier !== null &&
+    (activeTier as string) !== 'UNASSIGNED';
 
-  const assignedTier: ChapterTierState = storedChapterTier || 'BEGINNER';
+  const assignedTier: ChapterTierState = (activeTier as ChapterTierState) || 'BEGINNER';
   const isChapCompleted = assignedTier === 'COMPLETED';
 
   // Dynamic unlocking flags (post-diagnostic)
@@ -100,7 +124,7 @@ export default function ChapterLandingPage() {
         </div>
       </header>
 
-      {/* STEP 2: PRE-DIAGNOSTIC STATE BANNER */}
+      {/* PRE-DIAGNOSTIC STATE BANNER */}
       {!hasDiagnosticBeenTaken ? (
         <Card variant="white" className="p-8 flex flex-col md:flex-row items-center justify-between gap-6 border-2 border-blue-400">
           <div className="flex items-start gap-4">
@@ -203,7 +227,6 @@ export default function ChapterLandingPage() {
                     {isBegSkipped ? 'Retake Quiz' : 'Pass Quiz → Unlock Next Tier'}
                   </Button>
                 ) : (
-                  /* STEP 3 FIX: Route Start Topic button to /learning/[subjectId]/[chapterId]/[topicId]/module */
                   <Link
                     href={`/learning/${subjectId}/${chapterId}/${topic.topic_id}/module`}
                     className="no-underline w-full"
@@ -273,7 +296,6 @@ export default function ChapterLandingPage() {
                     {isIntSkipped ? 'Retake Quiz' : 'Pass Quiz → Unlock Advanced'}
                   </Button>
                 ) : (
-                  /* STEP 3 FIX: Route Start Topic button to /learning/[subjectId]/[chapterId]/[topicId]/module */
                   <Link
                     href={`/learning/${subjectId}/${chapterId}/${topic.topic_id}/module`}
                     className="no-underline w-full"
@@ -343,7 +365,6 @@ export default function ChapterLandingPage() {
                     Pass Quiz → Master Chapter 🏆
                   </Button>
                 ) : (
-                  /* STEP 3 FIX: Route Start Topic button to /learning/[subjectId]/[chapterId]/[topicId]/module */
                   <Link
                     href={`/learning/${subjectId}/${chapterId}/${topic.topic_id}/module`}
                     className="no-underline w-full"
