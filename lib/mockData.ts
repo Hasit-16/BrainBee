@@ -25,11 +25,13 @@ export interface Subject {
 }
 
 export interface DiagnosticQuestion {
-  question_id: string;
+  id: string;
   text: string;
   options: string[];
-  correct_index: number;
+  correctAnswer: string;
   points: number;
+  question_id?: string;
+  correct_index?: number;
 }
 
 export interface QuizQuestion {
@@ -42,37 +44,47 @@ export interface QuizQuestion {
 
 export const diagnosticQuestions: DiagnosticQuestion[] = [
   {
+    id: 'diag_q1',
     question_id: 'diag_q1',
     text: 'What is 1/4 + 1/4?',
     options: ['1/8', '2/4 (or 1/2)', '2/8', '1/24'],
+    correctAnswer: '2/4 (or 1/2)',
     correct_index: 1,
     points: 50
   },
   {
+    id: 'diag_q2',
     question_id: 'diag_q2',
     text: 'What is 1/3 + 1/6?',
     options: ['2/9', '2/6', '3/6 (or 1/2)', '1/18'],
+    correctAnswer: '3/6 (or 1/2)',
     correct_index: 2,
     points: 50
   },
   {
+    id: 'diag_q3',
     question_id: 'diag_q3',
     text: 'Find the sum of 2/5 and 3/10.',
     options: ['5/15', '7/10', '5/10', '6/50'],
+    correctAnswer: '7/10',
     correct_index: 1,
     points: 100
   },
   {
+    id: 'diag_q4',
     question_id: 'diag_q4',
     text: 'What is 3/8 + 1/4 in simplest form?',
     options: ['4/12', '5/8', '3/32', '4/8'],
+    correctAnswer: '5/8',
     correct_index: 1,
     points: 150
   },
   {
+    id: 'diag_q5',
     question_id: 'diag_q5',
     text: 'Calculate 5/12 + 1/3 in simplest form.',
     options: ['6/15', '7/12', '9/12 (or 3/4)', '6/36'],
+    correctAnswer: '9/12 (or 3/4)',
     correct_index: 2,
     points: 200
   }
