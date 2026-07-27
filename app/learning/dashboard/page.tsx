@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { useUserSession } from '@/lib/store';
 import { mockData, badgeDefinitions, BadgeDefinition } from '@/lib/mockData';
-import { createClient, CURRENT_USER_ID } from '@/lib/supabase/client';
+import { createClient, getCurrentUserId } from '@/lib/supabase/client';
 
 export default function GlobalStudentDashboard() {
   const router = useRouter();
@@ -28,25 +28,25 @@ export default function GlobalStudentDashboard() {
     async function fetchDashboardData() {
       try {
         const supabase = createClient();
+        const userId = await getCurrentUserId();
 
-        // 1. Fetch earned badges from student_badges
+        // 1. Fetch earned badges from student_badges using dynamic userId
         const { data: badgeData } = await supabase
           .from('student_badges')
           .select('badge_id')
-          .eq('user_id', CURRENT_USER_ID);
+          .eq('user_id', userId);
 
         if (badgeData && Array.isArray(badgeData) && badgeData.length > 0) {
           setEarnedBadges(badgeData.map((b) => b.badge_id));
         } else {
-          // Default initial fallback
           setEarnedBadges(['FLAWLESS']);
         }
 
-        // 2. Fetch level_progress for completion status
+        // 2. Fetch level_progress for completion status using dynamic userId
         const { data: progressData } = await supabase
           .from('level_progress')
           .select('chapter_id, level_id, is_completed')
-          .eq('user_id', CURRENT_USER_ID)
+          .eq('user_id', userId)
           .eq('is_completed', true);
 
         const chapterMap: Record<string, number> = {};
@@ -155,7 +155,7 @@ export default function GlobalStudentDashboard() {
         </div>
       </section>
 
-      {/* SECTION 2: TROPHY CASE (QUALITATIVE BADGES EARNED) */}
+      {/* SECTION 2: TROPHY CASE */}
       <section className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold color-primary flex items-center gap-2">

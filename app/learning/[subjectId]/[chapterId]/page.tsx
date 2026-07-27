@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { useUserSession, ChapterTierState } from '@/lib/store';
 import { mockData, Subject, Chapter } from '@/lib/mockData';
-import { createClient, CURRENT_USER_ID } from '@/lib/supabase/client';
+import { createClient, getCurrentUserId } from '@/lib/supabase/client';
 
 export default function ChapterLandingPage() {
   const router = useRouter();
@@ -29,17 +29,18 @@ export default function ChapterLandingPage() {
     }
   }, [isLoaded, role, router]);
 
-  // STEP 2: Query assigned_tier from chapter_tiers and progress from level_progress (or topic_progress)
+  // STEP 4: Dynamic user ID query for chapter_tiers and level_progress
   useEffect(() => {
     async function fetchChapterData() {
       try {
         const supabase = createClient();
+        const userId = await getCurrentUserId();
 
-        // 1. Fetch assigned_tier
+        // 1. Fetch assigned_tier using dynamic userId
         const { data: tierData } = await supabase
           .from('chapter_tiers')
           .select('assigned_tier')
-          .eq('user_id', CURRENT_USER_ID)
+          .eq('user_id', userId)
           .eq('subject_id', subjectId)
           .eq('chapter_id', chapterId)
           .maybeSingle();
@@ -48,11 +49,11 @@ export default function ChapterLandingPage() {
           setSupabaseTier(tierData.assigned_tier);
         }
 
-        // 2. Fetch level_progress completion status
+        // 2. Fetch level_progress completion status using dynamic userId
         const { data: levelProgressData } = await supabase
           .from('level_progress')
           .select('level_id, is_completed')
-          .eq('user_id', CURRENT_USER_ID)
+          .eq('user_id', userId)
           .eq('chapter_id', chapterId);
 
         const levelMap: Record<string, boolean> = {};
@@ -68,7 +69,7 @@ export default function ChapterLandingPage() {
         const { data: topicProgressData } = await supabase
           .from('topic_progress')
           .select('topic_id, is_completed')
-          .eq('user_id', CURRENT_USER_ID);
+          .eq('user_id', userId);
 
         if (topicProgressData && Array.isArray(topicProgressData)) {
           topicProgressData.forEach((row) => {
@@ -98,7 +99,6 @@ export default function ChapterLandingPage() {
     currentSubject.chapters.find((c) => c.chapter_id === chapterId) ||
     currentSubject.chapters[0];
 
-  // Active Tier Determination
   const activeTier = supabaseTier || chapterTiers?.[chapterId];
   const hasDiagnosticBeenTaken =
     activeTier !== undefined &&
@@ -106,24 +106,11 @@ export default function ChapterLandingPage() {
     (activeTier as string) !== 'UNASSIGNED';
 
   const assignedTier: ChapterTierState = (activeTier as ChapterTierState) || 'BEGINNER';
-  const isChapCompleted = assignedTier === 'COMPLETED';
 
-  // Check completion flags combining Supabase + Local Storage
   const isBegCompleted = Boolean(completedLevels['BEGINNER'] || completedQuizTopics?.['BEGINNER'] || completedQuizTopics?.['top_beg_01']);
   const isIntCompleted = Boolean(completedLevels['INTERMEDIATE'] || completedQuizTopics?.['INTERMEDIATE'] || completedQuizTopics?.['top_int_01']);
   const isAdvCompleted = Boolean(completedLevels['ADVANCED'] || completedQuizTopics?.['ADVANCED'] || completedQuizTopics?.['top_adv_01']);
 
-  // STEP 2: STRICT UNLOCKING ALGORITHM
-  // - IF assigned_tier === 'BEGINNER':
-  //   - BEGINNER: UNLOCKED
-  //   - INTERMEDIATE: Unlocks ONLY AFTER BEGINNER is completed
-  //   - ADVANCED: Unlocks ONLY AFTER INTERMEDIATE is completed
-  // - IF assigned_tier === 'INTERMEDIATE':
-  //   - BEGINNER: UNLOCKED (Optional backfill)
-  //   - INTERMEDIATE: UNLOCKED
-  //   - ADVANCED: Unlocks ONLY AFTER INTERMEDIATE is completed
-  // - IF assigned_tier === 'ADVANCED':
-  //   - ALL 3 cards (BEGINNER, INTERMEDIATE, ADVANCED) UNLOCKED immediately
   let isBegUnlocked = false;
   let isIntUnlocked = false;
   let isAdvUnlocked = false;
@@ -134,11 +121,10 @@ export default function ChapterLandingPage() {
       isIntUnlocked = true;
       isAdvUnlocked = true;
     } else if (assignedTier === 'INTERMEDIATE') {
-      isBegUnlocked = true; // Optional backfill
+      isBegUnlocked = true;
       isIntUnlocked = true;
       isAdvUnlocked = isIntCompleted;
     } else {
-      // BEGINNER or default
       isBegUnlocked = true;
       isIntUnlocked = isBegCompleted;
       isAdvUnlocked = isIntCompleted;
@@ -220,7 +206,7 @@ export default function ChapterLandingPage() {
         </Card>
       )}
 
-      {/* STEP 2 & STEP 4: THREE LEVEL CARDS (BEGINNER, INTERMEDIATE, ADVANCED) WITH VISUAL LOCK STATES */}
+      {/* THREE LEVEL CARDS WITH VISUAL LOCK STATES */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* CARD 1: BEGINNER LEVEL */}
         <div className={`transition-all ${!isBegUnlocked ? 'opacity-50 pointer-events-none grayscale' : ''}`}>

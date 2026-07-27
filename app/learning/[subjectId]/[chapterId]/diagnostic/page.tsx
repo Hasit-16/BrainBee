@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { useUserSession, Tier } from '@/lib/store';
 import { diagnosticQuestions } from '@/lib/mockData';
-import { createClient, CURRENT_USER_ID } from '@/lib/supabase/client';
+import { createClient, getCurrentUserId } from '@/lib/supabase/client';
 
 export default function ChapterDiagnosticPage() {
   const router = useRouter();
@@ -26,7 +26,7 @@ export default function ChapterDiagnosticPage() {
 
   const hasCheckedGuardRef = useRef(false);
 
-  // STEP 4: PERMANENT ROUTE GUARDING
+  // PERMANENT ROUTE GUARDING WITH DYNAMIC USER ID
   useEffect(() => {
     if (!isLoaded || hasCheckedGuardRef.current) return;
     hasCheckedGuardRef.current = true;
@@ -47,13 +47,15 @@ export default function ChapterDiagnosticPage() {
         return;
       }
 
-      // 2. Query Supabase chapter_tiers table
+      // 2. Query Supabase chapter_tiers table using dynamic userId
       try {
         const supabase = createClient();
+        const userId = await getCurrentUserId();
+
         const { data } = await supabase
           .from('chapter_tiers')
           .select('assigned_tier')
-          .eq('user_id', CURRENT_USER_ID)
+          .eq('user_id', userId)
           .eq('chapter_id', chapterId)
           .maybeSingle();
 
@@ -93,12 +95,11 @@ export default function ChapterDiagnosticPage() {
     }
   };
 
-  // STEP 3 & STEP 5: SCORING ALGORITHM, SUPABASE MUTATION & SUCCESS REDIRECT
+  // SCORING ALGORITHM & SUPABASE MUTATION WITH DYNAMIC USER ID
   const handleSubmit = async () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
 
-    // 1. Calculate cumulative score from binary scoring (0 or question.points)
     let totalPoints = 0;
     diagnosticQuestions.forEach((q, idx) => {
       if (selectedAnswers[idx] === q.correct_index) {
@@ -106,10 +107,6 @@ export default function ChapterDiagnosticPage() {
       }
     });
 
-    // 2. Map score strictly to database constraints:
-    // 0–200 pts -> 'BEGINNER'
-    // 201–450 pts -> 'INTERMEDIATE'
-    // 451–550 pts -> 'ADVANCED'
     let assignedTierStr: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' = 'BEGINNER';
     if (totalPoints > 450) {
       assignedTierStr = 'ADVANCED';
@@ -119,11 +116,12 @@ export default function ChapterDiagnosticPage() {
       assignedTierStr = 'BEGINNER';
     }
 
-    // 3. Supabase INSERT / UPSERT into chapter_tiers
     try {
       const supabase = createClient();
+      const userId = await getCurrentUserId();
+
       await supabase.from('chapter_tiers').upsert({
-        user_id: CURRENT_USER_ID,
+        user_id: userId,
         subject_id: subjectId,
         chapter_id: chapterId,
         assigned_tier: assignedTierStr,
@@ -133,10 +131,8 @@ export default function ChapterDiagnosticPage() {
       console.warn('Supabase chapter_tiers write notice: proceeding with local session state');
     }
 
-    // Update local state
     updateTier(assignedTierStr as Tier, chapterId);
 
-    // 4. STEP 5: Immediately execute router.push to Chapter Landing Page
     const targetUrl = `/learning/${subjectId}/${chapterId}`;
     try {
       router.push(targetUrl);
@@ -214,7 +210,6 @@ export default function ChapterDiagnosticPage() {
             })}
           </div>
 
-          {/* Action Bar (NO Backward Navigation) */}
           <div className="flex justify-end items-center border-t border-gray-100 pt-6">
             {currentIndex < totalQuestions - 1 ? (
               <Button

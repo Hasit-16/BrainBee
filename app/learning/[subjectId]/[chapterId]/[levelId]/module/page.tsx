@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { useUserSession } from '@/lib/store';
 import { mockData, Subject, Chapter } from '@/lib/mockData';
-import { createClient, CURRENT_USER_ID } from '@/lib/supabase/client';
+import { createClient, getCurrentUserId } from '@/lib/supabase/client';
 
 export default function LevelModulePage() {
   const router = useRouter();
@@ -27,15 +27,17 @@ export default function LevelModulePage() {
     }
   }, [isLoaded, role, router]);
 
-  // Query level_progress table in Supabase for CURRENT_USER_ID and levelId
+  // Query level_progress table in Supabase for dynamic userId and levelId
   useEffect(() => {
     async function fetchLevelProgress() {
       try {
         const supabase = createClient();
+        const userId = await getCurrentUserId();
+
         const { data } = await supabase
           .from('level_progress')
           .select('is_completed')
-          .eq('user_id', CURRENT_USER_ID)
+          .eq('user_id', userId)
           .eq('chapter_id', chapterId)
           .eq('level_id', levelId)
           .maybeSingle();
@@ -47,7 +49,7 @@ export default function LevelModulePage() {
           const { data: legacyData } = await supabase
             .from('topic_progress')
             .select('is_completed')
-            .eq('user_id', CURRENT_USER_ID)
+            .eq('user_id', userId)
             .eq('topic_id', levelId)
             .maybeSingle();
           if (legacyData && typeof legacyData.is_completed === 'boolean') {
@@ -65,7 +67,6 @@ export default function LevelModulePage() {
     return null;
   }
 
-  // Determine next level sequence
   const levels = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED'];
   const currentIdx = levels.indexOf(levelId.toUpperCase());
   const nextLevel = currentIdx !== -1 && currentIdx < levels.length - 1 ? levels[currentIdx + 1] : null;
@@ -74,7 +75,6 @@ export default function LevelModulePage() {
     ? `/learning/${subjectId}/${chapterId}/${nextLevel}/module`
     : `/learning/${subjectId}/${chapterId}`;
 
-  // Check completion status from Supabase primary, LocalStorage session fallback
   const isCompleted =
     typeof supabaseIsCompleted === 'boolean'
       ? supabaseIsCompleted

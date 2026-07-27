@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { useUserSession, saveQuizCache, getQuizCache, clearQuizCache } from '@/lib/store';
 import { quizQuestions, QuizQuestion, badgeDefinitions, BadgeDefinition } from '@/lib/mockData';
-import { createClient, CURRENT_USER_ID } from '@/lib/supabase/client';
+import { createClient, getCurrentUserId } from '@/lib/supabase/client';
 
 export default function TwoPassQuizPage() {
   const router = useRouter();
@@ -45,7 +45,7 @@ export default function TwoPassQuizPage() {
 
   const hasInitializedRef = useRef(false);
 
-  // ROUTE GUARDING & CACHE LOAD
+  // ROUTE GUARDING & CACHE LOAD WITH DYNAMIC USER ID
   useEffect(() => {
     if (!isLoaded || hasInitializedRef.current) return;
     hasInitializedRef.current = true;
@@ -56,7 +56,6 @@ export default function TwoPassQuizPage() {
     }
 
     async function verifyRouteGuard() {
-      // 1. Check local session completion first for instant guard
       const isLocallyCompleted = Boolean(completedQuizTopics?.[levelId]);
       if (isLocallyCompleted) {
         setIsGuarded(true);
@@ -68,13 +67,14 @@ export default function TwoPassQuizPage() {
         return;
       }
 
-      // 2. Query Supabase level_progress for route guard
       try {
         const supabase = createClient();
+        const userId = await getCurrentUserId();
+
         const { data } = await supabase
           .from('level_progress')
           .select('is_completed')
-          .eq('user_id', CURRENT_USER_ID)
+          .eq('user_id', userId)
           .eq('chapter_id', chapterId)
           .eq('level_id', levelId)
           .maybeSingle();
@@ -92,7 +92,6 @@ export default function TwoPassQuizPage() {
         console.warn('Route guard notice: proceeding with evaluation');
       }
 
-      // 3. If NOT completed, check mid-quiz cache
       const cachedState = getQuizCache(levelId);
       if (cachedState && typeof cachedState === 'object') {
         if (Array.isArray(cachedState.retryPass)) {
@@ -148,7 +147,6 @@ export default function TwoPassQuizPage() {
     const isCorrect = optIdx === currentQuestion.correct_index;
 
     if (!isSecondPass) {
-      // FIRST PASS LOGIC
       const newRetryQueue = !isCorrect ? [...retryPass, currentQuestion] : retryPass;
       if (!isCorrect) {
         setRetryPass(newRetryQueue);
@@ -170,7 +168,6 @@ export default function TwoPassQuizPage() {
         }
       }, 400);
     } else {
-      // SECOND PASS LOGIC
       saveQuizCache(levelId, {
         retryPass,
         currentIndex,
@@ -188,14 +185,16 @@ export default function TwoPassQuizPage() {
     }
   };
 
-  // FIRST PASS COMPLETION LOGIC
+  // FIRST PASS COMPLETION LOGIC WITH DYNAMIC USER ID
   const handleFirstPassCompletion = async (retryQueue: QuizQuestion[]) => {
     const firstAttemptScore = initialPass.length - retryQueue.length;
 
     try {
       const supabase = createClient();
+      const userId = await getCurrentUserId();
+
       await supabase.from('quiz_results').insert({
-        user_id: CURRENT_USER_ID,
+        user_id: userId,
         subject_id: subjectId,
         chapter_id: chapterId,
         level_id: levelId,
@@ -268,9 +267,8 @@ export default function TwoPassQuizPage() {
     handleGoToChapter();
   };
 
-  // STEP 3 & STEP 4: GUARANTEED PROGRESSION & BADGE AWARDING & CELEBRATION OVERLAY
+  // GUARANTEED PROGRESSION & BADGE AWARDING WITH DYNAMIC USER ID
   const triggerGuaranteedProgression = async (isFirstPassFlawless: boolean) => {
-    // 1. Evaluate badges to award
     const badgeIdsToAward: string[] = [];
     if (isFirstPassFlawless || perfectScoreFirstPass) {
       badgeIdsToAward.push('FLAWLESS');
@@ -283,11 +281,12 @@ export default function TwoPassQuizPage() {
       badgeIdsToAward.push('ADVANCED_MASTER');
     }
 
-    // 2. Supabase level_progress upsert and student_badges insertion
     try {
       const supabase = createClient();
+      const userId = await getCurrentUserId();
+
       await supabase.from('level_progress').upsert({
-        user_id: CURRENT_USER_ID,
+        user_id: userId,
         chapter_id: chapterId,
         level_id: levelId,
         is_completed: true,
@@ -297,7 +296,7 @@ export default function TwoPassQuizPage() {
       if (badgeIdsToAward.length > 0) {
         await supabase.from('student_badges').upsert(
           badgeIdsToAward.map((bId) => ({
-            user_id: CURRENT_USER_ID,
+            user_id: userId,
             badge_id: bId,
             earned_at: new Date().toISOString(),
           }))
@@ -307,7 +306,6 @@ export default function TwoPassQuizPage() {
       console.warn('Supabase completion & badge write notice: proceeding locally');
     }
 
-    // 3. Collect earned BadgeDefinition objects for CELEBRATION OVERLAY
     const awardedDefs = badgeIdsToAward
       .map((bId) => badgeDefinitions[bId])
       .filter(Boolean);
@@ -326,7 +324,6 @@ export default function TwoPassQuizPage() {
     completeQuiz(chapterId, quizLevel, levelId);
     setIsQuizFinished(true);
 
-    // STEP 4: Trigger confetti celebration animation!
     try {
       confetti({
         particleCount: 120,
@@ -515,7 +512,7 @@ export default function TwoPassQuizPage() {
           )}
         </Card>
       ) : (
-        /* STEP 4: CELEBRATION OVERLAY WITH EARNED BADGES (NO NUMERIC SCORES) */
+        /* CELEBRATION OVERLAY WITH EARNED BADGES */
         <Card variant="white" className="flex flex-col items-center text-center p-10 gap-6 animate-fade-in border-4 border-yellow-300">
           <div className="text-7xl animate-bounce">🎉</div>
 
@@ -531,7 +528,6 @@ export default function TwoPassQuizPage() {
             </p>
           </div>
 
-          {/* BADGES EARNED CELEBRATION CARD GRID */}
           {earnedBadges.length > 0 && (
             <div className="w-full max-w-md p-6 rounded-3xl bg-amber-50 border-2 border-amber-200 flex flex-col gap-4">
               <h3 className="text-lg font-extrabold text-amber-900 flex items-center justify-center gap-2">

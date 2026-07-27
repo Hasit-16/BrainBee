@@ -7,3 +7,16 @@ export function createClient() {
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || '';
   return createBrowserClient(url, key);
 }
+
+export async function getCurrentUserId(): Promise<string> {
+  try {
+    const supabase = createClient();
+    const { data } = await supabase.auth.getUser();
+    if (data?.user?.id) {
+      return data.user.id;
+    }
+  } catch (e) {
+    console.warn('Auth user resolution notice: using fallback user ID');
+  }
+  return CURRENT_USER_ID;
+}
