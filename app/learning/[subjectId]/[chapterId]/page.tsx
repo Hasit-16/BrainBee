@@ -14,13 +14,14 @@ import { createClient, CURRENT_USER_ID } from '@/lib/supabase/client';
 export default function ChapterLandingPage() {
   const router = useRouter();
   const params = useParams();
-  const { role, isLoaded, chapterTiers, completeQuiz } = useUserSession();
+  const { role, isLoaded, chapterTiers, completedQuizTopics } = useUserSession();
 
   const subjectId = (params?.subjectId as string) || 'math';
   const chapterId = (params?.chapterId as string) || 'chap_01';
 
   const [completedModalOpen, setCompletedModalOpen] = useState(false);
   const [supabaseTier, setSupabaseTier] = useState<string | null>(null);
+  const [completedLevels, setCompletedLevels] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (isLoaded && role !== 'STUDENT') {
@@ -28,12 +29,14 @@ export default function ChapterLandingPage() {
     }
   }, [isLoaded, role, router]);
 
-  // STEP 3: Fetch assigned tier from Supabase chapter_tiers for CURRENT_USER_ID, subjectId, and chapterId
+  // STEP 2: Query assigned_tier from chapter_tiers and progress from level_progress (or topic_progress)
   useEffect(() => {
-    async function fetchChapterTier() {
+    async function fetchChapterData() {
       try {
         const supabase = createClient();
-        const { data } = await supabase
+
+        // 1. Fetch assigned_tier
+        const { data: tierData } = await supabase
           .from('chapter_tiers')
           .select('assigned_tier')
           .eq('user_id', CURRENT_USER_ID)
@@ -41,14 +44,46 @@ export default function ChapterLandingPage() {
           .eq('chapter_id', chapterId)
           .maybeSingle();
 
-        if (data && data.assigned_tier) {
-          setSupabaseTier(data.assigned_tier);
+        if (tierData && tierData.assigned_tier) {
+          setSupabaseTier(tierData.assigned_tier);
         }
+
+        // 2. Fetch level_progress completion status
+        const { data: levelProgressData } = await supabase
+          .from('level_progress')
+          .select('level_id, is_completed')
+          .eq('user_id', CURRENT_USER_ID)
+          .eq('chapter_id', chapterId);
+
+        const levelMap: Record<string, boolean> = {};
+        if (levelProgressData && Array.isArray(levelProgressData)) {
+          levelProgressData.forEach((row) => {
+            if (row.level_id && row.is_completed) {
+              levelMap[row.level_id] = true;
+            }
+          });
+        }
+
+        // Legacy fallback check on topic_progress
+        const { data: topicProgressData } = await supabase
+          .from('topic_progress')
+          .select('topic_id, is_completed')
+          .eq('user_id', CURRENT_USER_ID);
+
+        if (topicProgressData && Array.isArray(topicProgressData)) {
+          topicProgressData.forEach((row) => {
+            if (row.topic_id && row.is_completed) {
+              levelMap[row.topic_id] = true;
+            }
+          });
+        }
+
+        setCompletedLevels(levelMap);
       } catch (e) {
         console.warn('Supabase fetch notice: falling back to local session state');
       }
     }
-    fetchChapterTier();
+    fetchChapterData();
   }, [subjectId, chapterId]);
 
   if (!isLoaded || role !== 'STUDENT') {
@@ -63,7 +98,7 @@ export default function ChapterLandingPage() {
     currentSubject.chapters.find((c) => c.chapter_id === chapterId) ||
     currentSubject.chapters[0];
 
-  // Supabase tier primary, fallback to LocalStorage session
+  // Active Tier Determination
   const activeTier = supabaseTier || chapterTiers?.[chapterId];
   const hasDiagnosticBeenTaken =
     activeTier !== undefined &&
@@ -73,27 +108,42 @@ export default function ChapterLandingPage() {
   const assignedTier: ChapterTierState = (activeTier as ChapterTierState) || 'BEGINNER';
   const isChapCompleted = assignedTier === 'COMPLETED';
 
-  // Dynamic unlocking flags (post-diagnostic)
-  const isBegUnlocked = hasDiagnosticBeenTaken;
-  const isBegSkipped =
-    hasDiagnosticBeenTaken &&
-    (assignedTier === 'INTERMEDIATE' || assignedTier === 'ADVANCED' || isChapCompleted);
+  // Check completion flags combining Supabase + Local Storage
+  const isBegCompleted = Boolean(completedLevels['BEGINNER'] || completedQuizTopics?.['BEGINNER'] || completedQuizTopics?.['top_beg_01']);
+  const isIntCompleted = Boolean(completedLevels['INTERMEDIATE'] || completedQuizTopics?.['INTERMEDIATE'] || completedQuizTopics?.['top_int_01']);
+  const isAdvCompleted = Boolean(completedLevels['ADVANCED'] || completedQuizTopics?.['ADVANCED'] || completedQuizTopics?.['top_adv_01']);
 
-  const isIntUnlocked =
-    hasDiagnosticBeenTaken &&
-    (assignedTier === 'INTERMEDIATE' || assignedTier === 'ADVANCED' || isChapCompleted);
-  const isIntSkipped =
-    hasDiagnosticBeenTaken && (assignedTier === 'ADVANCED' || isChapCompleted);
+  // STEP 2: STRICT UNLOCKING ALGORITHM
+  // - IF assigned_tier === 'BEGINNER':
+  //   - BEGINNER: UNLOCKED
+  //   - INTERMEDIATE: Unlocks ONLY AFTER BEGINNER is completed
+  //   - ADVANCED: Unlocks ONLY AFTER INTERMEDIATE is completed
+  // - IF assigned_tier === 'INTERMEDIATE':
+  //   - BEGINNER: UNLOCKED (Optional backfill)
+  //   - INTERMEDIATE: UNLOCKED
+  //   - ADVANCED: Unlocks ONLY AFTER INTERMEDIATE is completed
+  // - IF assigned_tier === 'ADVANCED':
+  //   - ALL 3 cards (BEGINNER, INTERMEDIATE, ADVANCED) UNLOCKED immediately
+  let isBegUnlocked = false;
+  let isIntUnlocked = false;
+  let isAdvUnlocked = false;
 
-  const isAdvUnlocked =
-    hasDiagnosticBeenTaken && (assignedTier === 'ADVANCED' || isChapCompleted);
-
-  const handleQuizPass = (level: 'beginner' | 'intermediate' | 'advanced') => {
-    const nextState = completeQuiz(currentChapter.chapter_id, level);
-    if (nextState === 'COMPLETED' || level === 'advanced') {
-      setCompletedModalOpen(true);
+  if (hasDiagnosticBeenTaken) {
+    if (assignedTier === 'ADVANCED') {
+      isBegUnlocked = true;
+      isIntUnlocked = true;
+      isAdvUnlocked = true;
+    } else if (assignedTier === 'INTERMEDIATE') {
+      isBegUnlocked = true; // Optional backfill
+      isIntUnlocked = true;
+      isAdvUnlocked = isIntCompleted;
+    } else {
+      // BEGINNER or default
+      isBegUnlocked = true;
+      isIntUnlocked = isBegCompleted;
+      isAdvUnlocked = isIntCompleted;
     }
-  };
+  }
 
   return (
     <main className="min-h-screen p-6 max-w-6xl mx-auto flex flex-col gap-8">
@@ -158,226 +208,127 @@ export default function ChapterLandingPage() {
           <div>
             <div className="flex items-center gap-2 mb-2">
               <Badge variant="green">✓ Diagnostic Complete</Badge>
-              <Badge variant="purple">Active Tier: {assignedTier}</Badge>
+              <Badge variant="purple">Assigned Tier: {assignedTier}</Badge>
             </div>
             <h2 className="text-2xl font-bold color-primary">
-              Adaptive Learning Ladder
+              Adaptive Level Progression
             </h2>
             <p className="text-sm opacity-80">
-              Your topics are dynamically unlocked based on your diagnostic results and quiz completions.
+              Your levels unlock dynamically based on your assigned tier and completed evaluations.
             </p>
           </div>
         </Card>
       )}
 
-      {/* TOPIC SECTIONS: BEGINNER, INTERMEDIATE, ADVANCED */}
-      <div className="flex flex-col gap-8">
-        {/* TIER 1: BEGINNER TOPICS */}
-        <section className={`flex flex-col gap-3 transition-all ${!isBegUnlocked ? 'opacity-50 pointer-events-none' : ''}`}>
-          <div className="flex items-center justify-between">
-            <h3 className="text-xl font-bold flex items-center gap-2">
-              🟢 Beginner Level
-              {!isBegUnlocked && <Badge variant="orange">🔒 Locked</Badge>}
-              {isBegSkipped && <Badge variant="green">✓ Skipped / Completed</Badge>}
-            </h3>
-            <span className="text-xs font-semibold opacity-70">Tier 1</span>
-          </div>
-
-          <div className="flex gap-6 overflow-x-auto pb-4 pt-1 snap-x relative">
-            {!isBegUnlocked && (
-              <div className="absolute inset-0 bg-gray-100/40 backdrop-blur-[2px] z-10 flex items-center justify-center rounded-3xl">
-                <div className="clay-badge clay-badge-yellow text-lg font-bold shadow-md">
-                  🔒 Locked until Diagnostic Completed
-                </div>
+      {/* STEP 2 & STEP 4: THREE LEVEL CARDS (BEGINNER, INTERMEDIATE, ADVANCED) WITH VISUAL LOCK STATES */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* CARD 1: BEGINNER LEVEL */}
+        <div className={`transition-all ${!isBegUnlocked ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
+          <Card
+            variant="white"
+            interactive={isBegUnlocked}
+            className="h-full flex flex-col justify-between p-6"
+          >
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <Badge variant="purple">🟢 Level 1</Badge>
+                <Badge variant={isBegCompleted ? 'green' : isBegUnlocked ? 'purple' : 'orange'}>
+                  {isBegCompleted ? '✓ Completed' : isBegUnlocked ? 'Unlocked' : '🔒 Locked'}
+                </Badge>
               </div>
-            )}
+              <h3 className="text-2xl font-bold mb-2">Beginner Level</h3>
+              <p className="text-sm opacity-80 mb-6">
+                Foundation micro-lessons and evaluation quiz.
+              </p>
+            </div>
 
-            {currentChapter.beginnerTopics.map((topic, topIdx) => (
-              <Card
-                key={topic.topic_id}
-                variant={topic.is_quiz ? 'yellow' : 'white'}
-                interactive={isBegUnlocked}
-                className="min-w-[280px] max-w-[320px] shrink-0 flex flex-col justify-between p-6 snap-start"
+            <Link
+              href={`/learning/${subjectId}/${chapterId}/BEGINNER/module`}
+              className="no-underline w-full"
+            >
+              <Button
+                variant="secondary"
+                size="md"
+                className="w-full flex justify-center"
+                disabled={!isBegUnlocked}
               >
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <Badge variant={topic.is_quiz ? 'orange' : 'purple'}>
-                      {topic.is_quiz ? '🎯 Tier Quiz' : `Beginner ${topIdx + 1}`}
-                    </Badge>
-                    <Badge variant={isBegSkipped || topic.is_completed ? 'green' : isBegUnlocked ? 'orange' : 'orange'}>
-                      {isBegSkipped || topic.is_completed ? '✓ Done' : isBegUnlocked ? 'Available' : 'Locked'}
-                    </Badge>
-                  </div>
-                  <h4 className="text-xl font-bold mb-2">{topic.topic_name}</h4>
-                  <p className="text-sm opacity-80 mb-4">
-                    {topic.is_quiz
-                      ? 'Pass this quiz to unlock Intermediate topics!'
-                      : 'Foundation micro-lesson.'}
-                  </p>
-                </div>
+                {isBegCompleted ? 'Review Level 🚀' : 'Start Level 🚀'}
+              </Button>
+            </Link>
+          </Card>
+        </div>
 
-                {topic.is_quiz ? (
-                  <Button
-                    variant="warning"
-                    size="md"
-                    className="w-full flex justify-center"
-                    onClick={() => handleQuizPass('beginner')}
-                    disabled={!isBegUnlocked}
-                  >
-                    {isBegSkipped ? 'Retake Quiz' : 'Pass Quiz → Unlock Next Tier'}
-                  </Button>
-                ) : (
-                  <Link
-                    href={`/learning/${subjectId}/${chapterId}/${topic.topic_id}/module`}
-                    className="no-underline w-full"
-                  >
-                    <Button variant="secondary" size="md" className="w-full flex justify-center" disabled={!isBegUnlocked}>
-                      Start Topic 🚀
-                    </Button>
-                  </Link>
-                )}
-              </Card>
-            ))}
-          </div>
-        </section>
-
-        {/* TIER 2: INTERMEDIATE TOPICS */}
-        <section className={`flex flex-col gap-3 transition-all ${!isIntUnlocked ? 'opacity-50 pointer-events-none' : ''}`}>
-          <div className="flex items-center justify-between">
-            <h3 className="text-xl font-bold flex items-center gap-2">
-              🔵 Intermediate Level
-              {!isIntUnlocked && <Badge variant="orange">🔒 Locked</Badge>}
-              {isIntSkipped && <Badge variant="green">✓ Skipped / Completed</Badge>}
-            </h3>
-            <span className="text-xs font-semibold opacity-70">Tier 2</span>
-          </div>
-
-          <div className="flex gap-6 overflow-x-auto pb-4 pt-1 snap-x relative">
-            {!isIntUnlocked && (
-              <div className="absolute inset-0 bg-gray-100/40 backdrop-blur-[2px] z-10 flex items-center justify-center rounded-3xl">
-                <div className="clay-badge clay-badge-yellow text-lg font-bold shadow-md">
-                  🔒 {hasDiagnosticBeenTaken ? 'Complete Beginner Quiz to Unlock' : 'Locked until Diagnostic Completed'}
-                </div>
+        {/* CARD 2: INTERMEDIATE LEVEL */}
+        <div className={`transition-all ${!isIntUnlocked ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
+          <Card
+            variant="blue"
+            interactive={isIntUnlocked}
+            className="h-full flex flex-col justify-between p-6"
+          >
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <Badge variant="yellow">🔵 Level 2</Badge>
+                <Badge variant={isIntCompleted ? 'green' : isIntUnlocked ? 'blue' : 'orange'}>
+                  {isIntCompleted ? '✓ Completed' : isIntUnlocked ? 'Unlocked' : '🔒 Locked'}
+                </Badge>
               </div>
-            )}
+              <h3 className="text-2xl font-bold mb-2">Intermediate Level</h3>
+              <p className="text-sm opacity-80 mb-6">
+                Targeted intermediate lessons and evaluation quiz.
+              </p>
+            </div>
 
-            {currentChapter.intermediateTopics.map((topic, topIdx) => (
-              <Card
-                key={topic.topic_id}
-                variant={topic.is_quiz ? 'yellow' : 'blue'}
-                interactive={isIntUnlocked}
-                className="min-w-[280px] max-w-[320px] shrink-0 flex flex-col justify-between p-6 snap-start"
+            <Link
+              href={`/learning/${subjectId}/${chapterId}/INTERMEDIATE/module`}
+              className="no-underline w-full"
+            >
+              <Button
+                variant="white"
+                size="md"
+                className="w-full flex justify-center"
+                disabled={!isIntUnlocked}
               >
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <Badge variant={topic.is_quiz ? 'orange' : 'yellow'}>
-                      {topic.is_quiz ? '🎯 Tier Quiz' : `Intermediate ${topIdx + 1}`}
-                    </Badge>
-                    <Badge variant={isIntSkipped || topic.is_completed ? 'green' : isIntUnlocked ? 'blue' : 'orange'}>
-                      {isIntSkipped || topic.is_completed ? '✓ Done' : isIntUnlocked ? 'Available' : 'Locked'}
-                    </Badge>
-                  </div>
-                  <h4 className="text-xl font-bold mb-2">{topic.topic_name}</h4>
-                  <p className="text-sm opacity-80 mb-4">
-                    {topic.is_quiz
-                      ? 'Pass this quiz to unlock Advanced topics!'
-                      : 'Targeted intermediate lesson.'}
-                  </p>
-                </div>
+                {isIntCompleted ? 'Review Level 🚀' : 'Start Level 🚀'}
+              </Button>
+            </Link>
+          </Card>
+        </div>
 
-                {topic.is_quiz ? (
-                  <Button
-                    variant="warning"
-                    size="md"
-                    className="w-full flex justify-center"
-                    onClick={() => handleQuizPass('intermediate')}
-                    disabled={!isIntUnlocked}
-                  >
-                    {isIntSkipped ? 'Retake Quiz' : 'Pass Quiz → Unlock Advanced'}
-                  </Button>
-                ) : (
-                  <Link
-                    href={`/learning/${subjectId}/${chapterId}/${topic.topic_id}/module`}
-                    className="no-underline w-full"
-                  >
-                    <Button variant="white" size="md" className="w-full flex justify-center" disabled={!isIntUnlocked}>
-                      Start Topic 🚀
-                    </Button>
-                  </Link>
-                )}
-              </Card>
-            ))}
-          </div>
-        </section>
-
-        {/* TIER 3: ADVANCED TOPICS */}
-        <section className={`flex flex-col gap-3 transition-all ${!isAdvUnlocked ? 'opacity-50 pointer-events-none' : ''}`}>
-          <div className="flex items-center justify-between">
-            <h3 className="text-xl font-bold flex items-center gap-2">
-              🟣 Advanced Level
-              {!isAdvUnlocked && <Badge variant="orange">🔒 Locked</Badge>}
-              {isChapCompleted && <Badge variant="green">🏆 Mastered</Badge>}
-            </h3>
-            <span className="text-xs font-semibold opacity-70">Tier 3</span>
-          </div>
-
-          <div className="flex gap-6 overflow-x-auto pb-4 pt-1 snap-x relative">
-            {!isAdvUnlocked && (
-              <div className="absolute inset-0 bg-gray-100/40 backdrop-blur-[2px] z-10 flex items-center justify-center rounded-3xl">
-                <div className="clay-badge clay-badge-yellow text-lg font-bold shadow-md">
-                  🔒 {hasDiagnosticBeenTaken ? 'Complete Intermediate Quiz to Unlock' : 'Locked until Diagnostic Completed'}
-                </div>
+        {/* CARD 3: ADVANCED LEVEL */}
+        <div className={`transition-all ${!isAdvUnlocked ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
+          <Card
+            variant="purple"
+            interactive={isAdvUnlocked}
+            className="h-full flex flex-col justify-between p-6"
+          >
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <Badge variant="orange">🟣 Level 3</Badge>
+                <Badge variant={isAdvCompleted ? 'green' : isAdvUnlocked ? 'purple' : 'orange'}>
+                  {isAdvCompleted ? '🏆 Mastered' : isAdvUnlocked ? 'Unlocked' : '🔒 Locked'}
+                </Badge>
               </div>
-            )}
+              <h3 className="text-2xl font-bold mb-2">Advanced Level</h3>
+              <p className="text-sm opacity-80 mb-6">
+                High-level challenge lessons and chapter mastery quiz.
+              </p>
+            </div>
 
-            {currentChapter.advancedTopics.map((topic, topIdx) => (
-              <Card
-                key={topic.topic_id}
-                variant={topic.is_quiz ? 'yellow' : 'purple'}
-                interactive={isAdvUnlocked}
-                className="min-w-[280px] max-w-[320px] shrink-0 flex flex-col justify-between p-6 snap-start"
+            <Link
+              href={`/learning/${subjectId}/${chapterId}/ADVANCED/module`}
+              className="no-underline w-full"
+            >
+              <Button
+                variant="white"
+                size="md"
+                className="w-full flex justify-center"
+                disabled={!isAdvUnlocked}
               >
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <Badge variant={topic.is_quiz ? 'orange' : 'yellow'}>
-                      {topic.is_quiz ? '🎯 Final Quiz' : `Advanced ${topIdx + 1}`}
-                    </Badge>
-                    <Badge variant={isChapCompleted || topic.is_completed ? 'green' : isAdvUnlocked ? 'purple' : 'orange'}>
-                      {isChapCompleted || topic.is_completed ? '✓ Mastered' : isAdvUnlocked ? 'Available' : 'Locked'}
-                    </Badge>
-                  </div>
-                  <h4 className="text-xl font-bold mb-2">{topic.topic_name}</h4>
-                  <p className="text-sm opacity-80 mb-4">
-                    {topic.is_quiz
-                      ? 'Pass this final quiz to master the chapter!'
-                      : 'High-level challenge lesson.'}
-                  </p>
-                </div>
-
-                {topic.is_quiz ? (
-                  <Button
-                    variant="secondary"
-                    size="md"
-                    className="w-full flex justify-center"
-                    onClick={() => handleQuizPass('advanced')}
-                    disabled={!isAdvUnlocked}
-                  >
-                    Pass Quiz → Master Chapter 🏆
-                  </Button>
-                ) : (
-                  <Link
-                    href={`/learning/${subjectId}/${chapterId}/${topic.topic_id}/module`}
-                    className="no-underline w-full"
-                  >
-                    <Button variant="white" size="md" className="w-full flex justify-center" disabled={!isAdvUnlocked}>
-                      Start Topic 🚀
-                    </Button>
-                  </Link>
-                )}
-              </Card>
-            ))}
-          </div>
-        </section>
+                {isAdvCompleted ? 'Review Level 🚀' : 'Start Level 🚀'}
+              </Button>
+            </Link>
+          </Card>
+        </div>
       </div>
 
       {/* Gamified Completion Modal */}
@@ -392,7 +343,7 @@ export default function ChapterLandingPage() {
             {currentChapter.chapter_name}
           </Badge>
           <p className="text-base">
-            Congratulations! You passed all difficulty quizzes and mastered this chapter! You earned +300 XP and a new Master Badge!
+            Congratulations! You passed all difficulty levels and mastered this chapter! You earned a new Master Badge!
           </p>
           <Button
             variant="secondary"
