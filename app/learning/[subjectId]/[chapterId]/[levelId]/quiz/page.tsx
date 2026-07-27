@@ -3,12 +3,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
+import confetti from 'canvas-confetti';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { useUserSession, saveQuizCache, getQuizCache, clearQuizCache } from '@/lib/store';
-import { quizQuestions, QuizQuestion } from '@/lib/mockData';
+import { quizQuestions, QuizQuestion, badgeDefinitions, BadgeDefinition } from '@/lib/mockData';
 import { createClient, CURRENT_USER_ID } from '@/lib/supabase/client';
 
 export default function TwoPassQuizPage() {
@@ -39,6 +40,7 @@ export default function TwoPassQuizPage() {
   const [showSecondPassSolution, setShowSecondPassSolution] = useState(false);
   const [isQuizFinished, setIsQuizFinished] = useState(false);
   const [perfectScoreFirstPass, setPerfectScoreFirstPass] = useState(false);
+  const [earnedBadges, setEarnedBadges] = useState<BadgeDefinition[]>([]);
   const [isGuarded, setIsGuarded] = useState(false);
 
   const hasInitializedRef = useRef(false);
@@ -66,7 +68,7 @@ export default function TwoPassQuizPage() {
         return;
       }
 
-      // 2. Query Supabase level_progress & topic_progress for route guard
+      // 2. Query Supabase level_progress for route guard
       try {
         const supabase = createClient();
         const { data } = await supabase
@@ -164,13 +166,7 @@ export default function TwoPassQuizPage() {
           setCurrentIndex((prev) => prev + 1);
           setSelectedOption(null);
         } else {
-          if (newRetryQueue.length === 0) {
-            setPerfectScoreFirstPass(true);
-            finishQuiz();
-          } else {
-            setIsIntermission(true);
-            setSelectedOption(null);
-          }
+          handleFirstPassCompletion(newRetryQueue);
         }
       }, 400);
     } else {
@@ -192,6 +188,34 @@ export default function TwoPassQuizPage() {
     }
   };
 
+  // FIRST PASS COMPLETION LOGIC
+  const handleFirstPassCompletion = async (retryQueue: QuizQuestion[]) => {
+    const firstAttemptScore = initialPass.length - retryQueue.length;
+
+    try {
+      const supabase = createClient();
+      await supabase.from('quiz_results').insert({
+        user_id: CURRENT_USER_ID,
+        subject_id: subjectId,
+        chapter_id: chapterId,
+        level_id: levelId,
+        first_attempt_score: firstAttemptScore,
+        total_questions: initialPass.length,
+        completed_at: new Date().toISOString(),
+      });
+    } catch (e) {
+      console.warn('Supabase quiz_results insert notice: proceeding with evaluation');
+    }
+
+    if (retryQueue.length === 0) {
+      setPerfectScoreFirstPass(true);
+      await triggerGuaranteedProgression(true);
+    } else {
+      setIsIntermission(true);
+      setSelectedOption(null);
+    }
+  };
+
   const advanceSecondPass = () => {
     setSelectedOption(null);
     setShowSecondPassSolution(false);
@@ -206,7 +230,7 @@ export default function TwoPassQuizPage() {
         isIntermission: false,
       });
     } else {
-      finishQuiz();
+      triggerGuaranteedProgression(false);
     }
   };
 
@@ -244,32 +268,50 @@ export default function TwoPassQuizPage() {
     handleGoToChapter();
   };
 
-  // STEP 3: SCORE MASKING - Raw score database INSERT for teacher analytics
-  const finishQuiz = async () => {
+  // STEP 3 & STEP 4: GUARANTEED PROGRESSION & BADGE AWARDING & CELEBRATION OVERLAY
+  const triggerGuaranteedProgression = async (isFirstPassFlawless: boolean) => {
+    // 1. Evaluate badges to award
+    const badgeIdsToAward: string[] = [];
+    if (isFirstPassFlawless || perfectScoreFirstPass) {
+      badgeIdsToAward.push('FLAWLESS');
+    } else {
+      badgeIdsToAward.push('PERSEVERANCE');
+    }
+
+    const lvlUpper = levelId.toUpperCase();
+    if (lvlUpper.includes('ADV')) {
+      badgeIdsToAward.push('ADVANCED_MASTER');
+    }
+
+    // 2. Supabase level_progress upsert and student_badges insertion
     try {
       const supabase = createClient();
-      const rawPoints = perfectScoreFirstPass ? 100 : Math.round(((initialPass.length - retryPass.length) / initialPass.length) * 100);
-
       await supabase.from('level_progress').upsert({
         user_id: CURRENT_USER_ID,
         chapter_id: chapterId,
         level_id: levelId,
         is_completed: true,
-        score: rawPoints,
         updated_at: new Date().toISOString(),
       });
 
-      await supabase.from('quiz_results').insert({
-        user_id: CURRENT_USER_ID,
-        topic_id: levelId,
-        subject_id: subjectId,
-        chapter_id: chapterId,
-        score: rawPoints,
-        completed_at: new Date().toISOString(),
-      });
+      if (badgeIdsToAward.length > 0) {
+        await supabase.from('student_badges').upsert(
+          badgeIdsToAward.map((bId) => ({
+            user_id: CURRENT_USER_ID,
+            badge_id: bId,
+            earned_at: new Date().toISOString(),
+          }))
+        );
+      }
     } catch (e) {
-      console.warn('Supabase quiz result write notice: proceeding with local session state');
+      console.warn('Supabase completion & badge write notice: proceeding locally');
     }
+
+    // 3. Collect earned BadgeDefinition objects for CELEBRATION OVERLAY
+    const awardedDefs = badgeIdsToAward
+      .map((bId) => badgeDefinitions[bId])
+      .filter(Boolean);
+    setEarnedBadges(awardedDefs);
 
     clearQuizCache(levelId);
     clearStoreProgress(levelId);
@@ -278,15 +320,24 @@ export default function TwoPassQuizPage() {
     setIsIntermission(false);
 
     let quizLevel: 'beginner' | 'intermediate' | 'advanced' = 'beginner';
-    const lvlUpper = levelId.toUpperCase();
     if (lvlUpper.includes('INT')) quizLevel = 'intermediate';
     if (lvlUpper.includes('ADV')) quizLevel = 'advanced';
 
     completeQuiz(chapterId, quizLevel, levelId);
     setIsQuizFinished(true);
+
+    // STEP 4: Trigger confetti celebration animation!
+    try {
+      confetti({
+        particleCount: 120,
+        spread: 80,
+        origin: { y: 0.6 },
+      });
+    } catch (e) {
+      console.warn('Confetti notice: canvas animation complete');
+    }
   };
 
-  // SCORE MASKING: Qualitative progress calculation for progress track bar
   const progressPercent = isQuizFinished
     ? 100
     : Math.round(
@@ -326,7 +377,6 @@ export default function TwoPassQuizPage() {
           <Button variant="warning" size="sm" className="flex items-center gap-2">
             🔍 Doubt Scan
           </Button>
-          {/* STEP 3 SCORE MASKING: Qualitative badges instead of numeric question counts */}
           {!isQuizFinished && !isIntermission && (
             <Badge variant={isSecondPass ? 'orange' : 'purple'}>
               {isSecondPass ? 'Needs Review' : 'Evaluation in Progress'}
@@ -335,7 +385,7 @@ export default function TwoPassQuizPage() {
         </div>
       </header>
 
-      {/* INTERMISSION UI (SCORE MASKED: NO NUMERICAL RATIOS/SCORES) */}
+      {/* INTERMISSION UI */}
       {isIntermission ? (
         <Card variant="white" className="p-8 flex flex-col items-center text-center gap-6">
           <div className="text-5xl animate-bounce">📊</div>
@@ -456,7 +506,7 @@ export default function TwoPassQuizPage() {
                       onClick={advanceSecondPass}
                       className="px-6 cursor-pointer"
                     >
-                      Next Question →
+                      Continue →
                     </Button>
                   </div>
                 </div>
@@ -465,30 +515,62 @@ export default function TwoPassQuizPage() {
           )}
         </Card>
       ) : (
-        /* STEP 3 SCORE MASKING: QUALITATIVE COMPLETION OVERLAY (NO NUMERIC SCORES) */
-        <Card variant="white" className="flex flex-col items-center text-center p-10 gap-6">
-          <div className="text-6xl animate-bounce">🏆</div>
+        /* STEP 4: CELEBRATION OVERLAY WITH EARNED BADGES (NO NUMERIC SCORES) */
+        <Card variant="white" className="flex flex-col items-center text-center p-10 gap-6 animate-fade-in border-4 border-yellow-300">
+          <div className="text-7xl animate-bounce">🎉</div>
 
           <div>
             <Badge variant="green" className="mb-3 text-lg px-4 py-1">
-              ✓ Mastered & Completed
+              ✓ Mastered & Level Completed
             </Badge>
-            <h2 className="text-3xl font-extrabold color-primary mb-2">
-              Next Difficulty Level Unlocked!
+            <h2 className="text-4xl font-extrabold color-primary mb-2">
+              Congratulations!
             </h2>
             <p className="text-base opacity-85 max-w-lg mx-auto">
-              Outstanding effort! You successfully demonstrated concept mastery. Your next difficulty level is now unlocked on your Chapter Landing Page!
+              You successfully completed all evaluation passes and unlocked your next learning tier!
             </p>
           </div>
 
-          <Button
-            variant="secondary"
-            size="lg"
-            className="w-full max-w-sm flex justify-center text-lg cursor-pointer"
-            onClick={handleGoToChapter}
-          >
-            Return to Chapter 👈
-          </Button>
+          {/* BADGES EARNED CELEBRATION CARD GRID */}
+          {earnedBadges.length > 0 && (
+            <div className="w-full max-w-md p-6 rounded-3xl bg-amber-50 border-2 border-amber-200 flex flex-col gap-4">
+              <h3 className="text-lg font-extrabold text-amber-900 flex items-center justify-center gap-2">
+                🏆 New Qualitative Badges Earned!
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {earnedBadges.map((badge) => (
+                  <div
+                    key={badge.id}
+                    className="p-4 rounded-2xl bg-white border border-amber-300 flex flex-col items-center text-center gap-1 shadow-sm"
+                  >
+                    <span className="text-3xl">{badge.icon}</span>
+                    <span className="font-bold text-sm text-gray-900">{badge.name}</span>
+                    <span className="text-xs text-gray-600">{badge.description}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="flex flex-col sm:flex-row gap-4 w-full justify-center max-w-md pt-2">
+            <Button
+              variant="secondary"
+              size="lg"
+              className="w-full flex justify-center text-lg cursor-pointer"
+              onClick={handleGoToChapter}
+            >
+              Return to Chapter 👈
+            </Button>
+            <Link href="/learning/dashboard" className="no-underline w-full">
+              <Button
+                variant="white"
+                size="lg"
+                className="w-full flex justify-center text-lg cursor-pointer"
+              >
+                Go to Dashboard 🚀
+              </Button>
+            </Link>
+          </div>
         </Card>
       )}
     </main>

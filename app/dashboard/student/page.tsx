@@ -134,7 +134,7 @@ export default function StudentDashboardHub() {
               </p>
             </div>
           </div>
-          <Link href="/learning/math/chap_01/top_01/diagnostic" className="no-underline shrink-0">
+          <Link href="/learning/math/chap_01/diagnostic" className="no-underline shrink-0">
             <Button variant="secondary" size="lg" className="flex items-center justify-center">
               🚀 Start Diagnostic Test
             </Button>

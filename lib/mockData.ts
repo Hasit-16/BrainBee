@@ -42,6 +42,38 @@ export interface QuizQuestion {
   solution_explanation: string;
 }
 
+export interface BadgeDefinition {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  color: 'yellow' | 'green' | 'purple' | 'orange' | 'blue';
+}
+
+export const badgeDefinitions: Record<string, BadgeDefinition> = {
+  FLAWLESS: {
+    id: 'FLAWLESS',
+    name: 'Flawless Master',
+    description: 'Perfect evaluation score on first attempt',
+    icon: '⚡',
+    color: 'yellow',
+  },
+  PERSEVERANCE: {
+    id: 'PERSEVERANCE',
+    name: 'Perseverance Star',
+    description: 'Demonstrated concept mastery through review loop',
+    icon: '🌟',
+    color: 'purple',
+  },
+  ADVANCED_MASTER: {
+    id: 'ADVANCED_MASTER',
+    name: 'Advanced Champion',
+    description: 'Mastered the highest difficulty tier',
+    icon: '👑',
+    color: 'orange',
+  },
+};
+
 export const diagnosticQuestions: DiagnosticQuestion[] = [
   {
     id: 'diag_q1',
@@ -171,6 +203,7 @@ export const mockData = {
     overallProgress: 35,
     badges: ['Star Starter', 'Math Explorer']
   },
+  badgeDefinitions,
   diagnosticQuestions,
   quizQuestions,
   subjects: [
@@ -186,26 +219,26 @@ export const mockData = {
           chapter_id: 'chap_01',
           chapter_name: 'Fractions & Decimals',
           beginnerTopics: [
-            { topic_id: 'top_beg_01', topic_name: 'Adding Basic Fractions', is_completed: false }
+            { topic_id: 'BEGINNER', topic_name: 'Adding Basic Fractions', is_completed: false }
           ],
           intermediateTopics: [
-            { topic_id: 'top_int_01', topic_name: 'Finding LCM & GCD', is_completed: false }
+            { topic_id: 'INTERMEDIATE', topic_name: 'Finding LCM & GCD', is_completed: false }
           ],
           advancedTopics: [
-            { topic_id: 'top_adv_01', topic_name: 'Mixed Numbers Addition', is_completed: false }
+            { topic_id: 'ADVANCED', topic_name: 'Mixed Numbers Addition', is_completed: false }
           ]
         },
         {
           chapter_id: 'chap_02',
           chapter_name: 'Geometry Basics',
           beginnerTopics: [
-            { topic_id: 'top_beg_02', topic_name: 'Identifying Lines & Angles', is_completed: false }
+            { topic_id: 'BEGINNER', topic_name: 'Identifying Lines & Angles', is_completed: false }
           ],
           intermediateTopics: [
-            { topic_id: 'top_int_02', topic_name: 'Measuring Angles & Triangles', is_completed: false }
+            { topic_id: 'INTERMEDIATE', topic_name: 'Measuring Angles & Triangles', is_completed: false }
           ],
           advancedTopics: [
-            { topic_id: 'top_adv_02', topic_name: 'Perimeter & Area Formulas', is_completed: false }
+            { topic_id: 'ADVANCED', topic_name: 'Perimeter & Area Formulas', is_completed: false }
           ]
         }
       ]
@@ -222,13 +255,13 @@ export const mockData = {
           chapter_id: 'chap_03',
           chapter_name: 'States of Matter',
           beginnerTopics: [
-            { topic_id: 'top_beg_03', topic_name: 'Solids, Liquids, Gases', is_completed: false }
+            { topic_id: 'BEGINNER', topic_name: 'Solids, Liquids, Gases', is_completed: false }
           ],
           intermediateTopics: [
-            { topic_id: 'top_int_03', topic_name: 'Molecular Motion', is_completed: false }
+            { topic_id: 'INTERMEDIATE', topic_name: 'Molecular Motion', is_completed: false }
           ],
           advancedTopics: [
-            { topic_id: 'top_adv_03', topic_name: 'Evaporation Curves', is_completed: false }
+            { topic_id: 'ADVANCED', topic_name: 'Evaporation Curves', is_completed: false }
           ]
         }
       ]
@@ -245,13 +278,13 @@ export const mockData = {
           chapter_id: 'chap_04',
           chapter_name: 'Grammar & Vocabulary',
           beginnerTopics: [
-            { topic_id: 'top_beg_04', topic_name: 'Nouns & Verbs', is_completed: false }
+            { topic_id: 'BEGINNER', topic_name: 'Nouns & Verbs', is_completed: false }
           ],
           intermediateTopics: [
-            { topic_id: 'top_int_04', topic_name: 'Verb Tenses', is_completed: false }
+            { topic_id: 'INTERMEDIATE', topic_name: 'Verb Tenses', is_completed: false }
           ],
           advancedTopics: [
-            { topic_id: 'top_adv_04', topic_name: 'Complex Sentence Structure', is_completed: false }
+            { topic_id: 'ADVANCED', topic_name: 'Complex Sentence Structure', is_completed: false }
           ]
         }
       ]
@@ -265,13 +298,13 @@ export const mockData = {
         chapter_id: "chap_01",
         chapter_name: "Fractions",
         beginnerTopics: [
-          { topic_id: "top_01", topic_name: "Adding Fractions", is_completed: false }
+          { topic_id: "BEGINNER", topic_name: "Adding Fractions", is_completed: false }
         ],
         intermediateTopics: [
-          { topic_id: "top_02", topic_name: "LCM", is_completed: false }
+          { topic_id: "INTERMEDIATE", topic_name: "LCM", is_completed: false }
         ],
         advancedTopics: [
-          { topic_id: "top_03", topic_name: "Mixed Numbers", is_completed: false }
+          { topic_id: "ADVANCED", topic_name: "Mixed Numbers", is_completed: false }
         ]
       }
     ]
