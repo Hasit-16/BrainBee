@@ -8,6 +8,7 @@ import { mockData } from '@/lib/mockData';
 import { playSound, toggleSound, getSoundStatus } from '@/lib/sound';
 import { DoubtScannerModal } from '@/components/DoubtScannerModal';
 import { createClient, getCurrentUserId } from '@/lib/supabase/client';
+import { UserIcon, SoundOnIcon, SoundOffIcon, SearchIcon, StarIcon, LogoutIcon } from '@/components/ui/Icons';
 
 export default function StudentDashboardHub() {
   const router = useRouter();
@@ -84,23 +85,23 @@ export default function StudentDashboardHub() {
 
   return (
     <main className="min-h-screen bg-[#f4f7fb] text-slate-800 p-6 md:p-10 max-w-7xl mx-auto flex flex-col gap-10 font-sans">
-      {/* STEP 1: HEADER & STATS (Pills & 3D Clay Container) */}
+      {/* STEP 1: HEADER & STATS (Clean SVG Icons Container) */}
       <header className={`${clayCardFormula} p-6 md:p-8 flex flex-wrap items-center justify-between gap-6`}>
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-slate-100 border border-slate-200/60 text-slate-700 flex items-center justify-center font-extrabold text-2xl shadow-[inset_2px_4px_6px_rgba(0,0,0,0.08)]">
-            👤
+          <div className="w-14 h-14 rounded-full bg-slate-100 border border-slate-200/60 text-slate-600 flex items-center justify-center shadow-[inset_2px_4px_6px_rgba(0,0,0,0.08)]">
+            <UserIcon className="w-7 h-7" />
           </div>
           <div>
             <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-800">
               Welcome back, {session?.name || student.name}!
             </h1>
             <p className="text-sm font-semibold text-slate-500 mt-0.5">
-              Grade 5
+              Grade 5 Standard
             </p>
           </div>
         </div>
 
-        {/* STEP 2: GLOWING "JELLY" ACTION BUTTONS */}
+        {/* STEP 2: GLOWING ACTION BUTTONS WITH CLEAN SVG ICONS */}
         <div className="flex items-center gap-3 flex-wrap">
           {/* Sound Toggle Button */}
           <button
@@ -111,7 +112,8 @@ export default function StudentDashboardHub() {
             }}
             className="bg-gradient-to-b from-blue-100 to-blue-200 text-blue-800 shadow-[0_6px_12px_rgba(59,130,246,0.25)] border-t border-white/80 rounded-full font-bold text-sm px-5 py-2.5 hover:translate-y-0.5 active:translate-y-1 transition-all flex items-center gap-2 cursor-pointer"
           >
-            {soundOn ? '🔊 Sound ON' : '🔇 Muted'}
+            {soundOn ? <SoundOnIcon /> : <SoundOffIcon />}
+            <span>{soundOn ? 'Sound ON' : 'Muted'}</span>
           </button>
 
           {/* Doubt Scan Button */}
@@ -122,25 +124,28 @@ export default function StudentDashboardHub() {
             }}
             className="bg-gradient-to-b from-amber-200 to-amber-300 text-amber-900 shadow-[0_6px_12px_rgba(245,158,11,0.3)] border-t border-white/80 rounded-full font-bold text-sm px-5 py-2.5 hover:translate-y-0.5 active:translate-y-1 transition-all flex items-center gap-2 cursor-pointer"
           >
-            🔍 Doubt Scan
+            <SearchIcon />
+            <span>Doubt Scan</span>
           </button>
           
           {/* XP Pill */}
           <div className="bg-gradient-to-b from-amber-300 to-amber-400 text-amber-950 shadow-[0_6px_12px_rgba(245,158,11,0.35)] border-t border-amber-200 rounded-full font-extrabold text-sm px-5 py-2.5 flex items-center gap-1.5">
-            ⭐ {student.xp} XP
+            <StarIcon className="w-4 h-4 text-amber-950 fill-current" />
+            <span>{student.xp} XP</span>
           </div>
 
           {/* Logout Button */}
           <button
             onClick={handleLogout}
-            className="bg-gradient-to-b from-rose-100 to-rose-200 text-rose-700 shadow-[0_6px_12px_rgba(244,63,94,0.2)] border-t border-white/80 rounded-full font-bold text-sm px-5 py-2.5 hover:translate-y-0.5 active:translate-y-1 transition-all cursor-pointer"
+            className="bg-gradient-to-b from-rose-100 to-rose-200 text-rose-700 shadow-[0_6px_12px_rgba(244,63,94,0.2)] border-t border-white/80 rounded-full font-bold text-sm px-5 py-2.5 hover:translate-y-0.5 active:translate-y-1 transition-all flex items-center gap-2 cursor-pointer"
           >
-            Logout 🚪
+            <LogoutIcon />
+            <span>Logout</span>
           </button>
         </div>
       </header>
 
-      {/* STEP 2: SUBJECT CARDS (Grid Layout - True 3D Clay Cards & Glowing Jelly Buttons) */}
+      {/* STEP 2: SUBJECT CARDS */}
       <section className="flex flex-col gap-5">
         <div className="flex items-center justify-between">
           <div>
@@ -218,7 +223,7 @@ export default function StudentDashboardHub() {
                   {/* Clean Global Claymorphism Button */}
                   <Link href={`/learning/${sub.subject_id}`} className="no-underline mt-2">
                     <button className={accent.btnClass}>
-                      Start Learning 🚀
+                      Start Learning
                     </button>
                   </Link>
                 </div>

@@ -14,6 +14,8 @@ import { createClient, getCurrentUserId } from '@/lib/supabase/client';
 
 import { playSound } from '@/lib/sound';
 
+import { DoubtScannerModal } from '@/components/DoubtScannerModal';
+
 export default function TwoPassQuizPage() {
   const router = useRouter();
   const params = useParams();
@@ -44,6 +46,7 @@ export default function TwoPassQuizPage() {
   const [perfectScoreFirstPass, setPerfectScoreFirstPass] = useState(false);
   const [earnedBadges, setEarnedBadges] = useState<BadgeDefinition[]>([]);
   const [isGuarded, setIsGuarded] = useState(false);
+  const [isDoubtModalOpen, setIsDoubtModalOpen] = useState(false);
 
   const hasInitializedRef = useRef(false);
 
@@ -351,7 +354,15 @@ export default function TwoPassQuizPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Button variant="warning" size="sm" className="flex items-center gap-2">
+          <Button
+            variant="warning"
+            size="sm"
+            onClick={() => {
+              playSound('click');
+              setIsDoubtModalOpen(true);
+            }}
+            className="flex items-center gap-2 cursor-pointer"
+          >
             🔍 Doubt Scan
           </Button>
           {!isQuizFinished && !isIntermission && (
@@ -563,6 +574,11 @@ export default function TwoPassQuizPage() {
           })()}
         </Card>
       )}
+      {/* DOUBT SCANNER MODAL */}
+      <DoubtScannerModal
+        isOpen={isDoubtModalOpen}
+        onClose={() => setIsDoubtModalOpen(false)}
+      />
     </main>
   );
 }

@@ -11,6 +11,9 @@ import { useUserSession, Tier } from '@/lib/store';
 import { getDiagnosticQuestions } from '@/lib/mockData';
 import { createClient, getCurrentUserId } from '@/lib/supabase/client';
 
+import { playSound } from '@/lib/sound';
+import { DoubtScannerModal } from '@/components/DoubtScannerModal';
+
 export default function ChapterDiagnosticPage() {
   const router = useRouter();
   const params = useParams();
@@ -25,6 +28,7 @@ export default function ChapterDiagnosticPage() {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGuarded, setIsGuarded] = useState(false);
+  const [isDoubtModalOpen, setIsDoubtModalOpen] = useState(false);
 
   const hasCheckedGuardRef = useRef(false);
 
@@ -161,7 +165,15 @@ export default function ChapterDiagnosticPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Button variant="warning" size="sm" className="flex items-center gap-2">
+          <Button
+            variant="warning"
+            size="sm"
+            onClick={() => {
+              playSound('click');
+              setIsDoubtModalOpen(true);
+            }}
+            className="flex items-center gap-2 cursor-pointer"
+          >
             🔍 Doubt Scan
           </Button>
           <Badge variant="blue">
@@ -237,6 +249,11 @@ export default function ChapterDiagnosticPage() {
           </div>
         </div>
       </Card>
+      {/* DOUBT SCANNER MODAL */}
+      <DoubtScannerModal
+        isOpen={isDoubtModalOpen}
+        onClose={() => setIsDoubtModalOpen(false)}
+      />
     </main>
   );
 }

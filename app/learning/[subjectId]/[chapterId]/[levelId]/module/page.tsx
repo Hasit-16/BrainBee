@@ -9,6 +9,9 @@ import { mockData, Subject, Chapter } from '@/lib/mockData';
 import { createClient, getCurrentUserId } from '@/lib/supabase/client';
 import { ScriptPlayer } from '@/components/ScriptPlayer';
 
+import { playSound } from '@/lib/sound';
+import { DoubtScannerModal } from '@/components/DoubtScannerModal';
+
 export default function LevelModulePage() {
   const router = useRouter();
   const params = useParams();
@@ -19,6 +22,7 @@ export default function LevelModulePage() {
   const levelId = (params?.levelId as string) || 'BEGINNER';
 
   const [supabaseIsCompleted, setSupabaseIsCompleted] = useState<boolean | null>(null);
+  const [isDoubtModalOpen, setIsDoubtModalOpen] = useState(false);
 
   useEffect(() => {
     if (isLoaded && role !== 'STUDENT') {
@@ -89,7 +93,13 @@ export default function LevelModulePage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <button className="rounded-full px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-800 font-bold text-xs shadow-sm flex items-center gap-1.5 border border-amber-200">
+          <button
+            onClick={() => {
+              playSound('click');
+              setIsDoubtModalOpen(true);
+            }}
+            className="rounded-full px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-800 font-bold text-xs shadow-sm flex items-center gap-1.5 border border-amber-200 cursor-pointer hover:translate-y-0.5 transition-all"
+          >
             🔍 Doubt Scan
           </button>
           <span className="rounded-full px-3.5 py-1.5 bg-purple-100 text-purple-700 font-extrabold text-xs border border-purple-200 shadow-sm">
@@ -104,6 +114,12 @@ export default function LevelModulePage() {
         chapterId={chapterId}
         level={levelId}
         onComplete={handleScriptCompletion}
+      />
+
+      {/* DOUBT SCANNER MODAL */}
+      <DoubtScannerModal
+        isOpen={isDoubtModalOpen}
+        onClose={() => setIsDoubtModalOpen(false)}
       />
     </main>
   );

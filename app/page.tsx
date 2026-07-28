@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
 import { useUserSession, Role } from '@/lib/store';
 import { createClient } from '@/lib/supabase/client';
+import { UserIcon } from '@/components/ui/Icons';
 
 export default function UnifiedAuthPage() {
   const router = useRouter();
@@ -62,7 +63,6 @@ export default function UnifiedAuthPage() {
 
     setLoading(true);
 
-    // Format dummy email: `${userId}@${instituteId}.brainbee.edu`
     const authEmail = `${stu}@${inst}.brainbee.edu`.toLowerCase();
 
     try {
@@ -110,7 +110,6 @@ export default function UnifiedAuthPage() {
 
     setLoading(true);
 
-    // Format dummy email for Teacher
     const userIdClean = rawUser.replace(/@.*$/, '');
     const authEmail = `${userIdClean}@${inst}.brainbee.edu`.toLowerCase();
 
@@ -151,7 +150,9 @@ export default function UnifiedAuthPage() {
         {/* Branding Header */}
         <div className="text-center mb-8 flex flex-col items-center gap-2">
           <div className="flex items-center gap-3">
-            <span className="text-5xl animate-bounce">🐝</span>
+            <div className="w-12 h-12 rounded-2xl bg-amber-400 text-amber-950 flex items-center justify-center font-extrabold text-2xl shadow-md border border-amber-300">
+              B
+            </div>
             <h1 className="text-4xl font-extrabold color-primary">BrainBee</h1>
             <Badge variant="yellow">PWA</Badge>
           </div>
@@ -177,21 +178,21 @@ export default function UnifiedAuthPage() {
             <Button
               variant="white"
               size="sm"
-              className="text-xs font-bold border border-gray-200 hover:bg-gray-50 cursor-pointer"
+              className="text-xs font-bold border border-gray-200 hover:bg-gray-50 cursor-pointer flex items-center gap-1.5"
               onClick={() => {
                 setActivePortal(activePortal === 'STUDENT' ? 'TEACHER' : 'STUDENT');
                 setErrorMessage(null);
               }}
             >
-              {activePortal === 'STUDENT' ? '👩‍🏫 Teacher Access' : '🎓 Student Access'}
+              <UserIcon className="w-3.5 h-3.5" />
+              <span>{activePortal === 'STUDENT' ? 'Teacher Access' : 'Student Access'}</span>
             </Button>
           </div>
 
           {/* Validation Feedback Alert */}
           {errorMessage && (
             <div className="p-4 rounded-2xl bg-red-50 border-2 border-red-200 text-red-700 text-sm font-bold flex items-center gap-2">
-              <span>⚠️</span>
-              <span>{errorMessage}</span>
+              <span>Notice: {errorMessage}</span>
             </div>
           )}
 
@@ -244,7 +245,7 @@ export default function UnifiedAuthPage() {
                 className="w-full flex justify-center mt-2 cursor-pointer text-lg font-bold"
                 disabled={loading}
               >
-                {loading ? 'Authenticating...' : '🚀 Sign In as Student'}
+                {loading ? 'Authenticating...' : 'Sign In as Student'}
               </Button>
             </form>
           ) : (
@@ -296,7 +297,7 @@ export default function UnifiedAuthPage() {
                 className="w-full flex justify-center mt-2 cursor-pointer text-lg font-bold"
                 disabled={loading}
               >
-                {loading ? 'Authenticating...' : '👩‍🏫 Sign In as Teacher'}
+                {loading ? 'Authenticating...' : 'Sign In as Teacher'}
               </Button>
             </form>
           )}

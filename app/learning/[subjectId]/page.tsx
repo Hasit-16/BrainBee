@@ -8,6 +8,8 @@ import { mockData, Subject } from '@/lib/mockData';
 import { createClient, getCurrentUserId } from '@/lib/supabase/client';
 import { playSound } from '@/lib/sound';
 
+import { DoubtScannerModal } from '@/components/DoubtScannerModal';
+
 export default function SubjectPage() {
   const router = useRouter();
   const params = useParams();
@@ -16,6 +18,7 @@ export default function SubjectPage() {
   const subjectId = (params?.subjectId as string) || 'math';
   const [dbTiersMap, setDbTiersMap] = useState<Record<string, string>>({});
   const [dbCompletedChapters, setDbCompletedChapters] = useState<Record<string, boolean>>({});
+  const [isDoubtModalOpen, setIsDoubtModalOpen] = useState(false);
 
   useEffect(() => {
     if (isLoaded && role !== 'STUDENT') {
@@ -105,7 +108,13 @@ export default function SubjectPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <button className="bg-gradient-to-b from-amber-200 to-amber-300 text-amber-900 shadow-[0_6px_12px_rgba(245,158,11,0.3)] border-t border-white/80 rounded-full font-bold text-sm px-5 py-2.5 flex items-center gap-2 cursor-pointer">
+          <button
+            onClick={() => {
+              playSound('click');
+              setIsDoubtModalOpen(true);
+            }}
+            className="bg-gradient-to-b from-amber-200 to-amber-300 text-amber-900 shadow-[0_6px_12px_rgba(245,158,11,0.3)] border-t border-white/80 rounded-full font-bold text-sm px-5 py-2.5 flex items-center gap-2 cursor-pointer hover:translate-y-0.5 active:translate-y-1 transition-all"
+          >
             🔍 Doubt Scan
           </button>
         </div>
@@ -188,6 +197,12 @@ export default function SubjectPage() {
           })}
         </div>
       </section>
+
+      {/* DOUBT SCANNER MODAL */}
+      <DoubtScannerModal
+        isOpen={isDoubtModalOpen}
+        onClose={() => setIsDoubtModalOpen(false)}
+      />
     </main>
   );
 }

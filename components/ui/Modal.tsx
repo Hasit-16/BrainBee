@@ -1,4 +1,5 @@
 import React from 'react';
+import { TrophyIcon } from '@/components/ui/Icons';
 
 export interface ModalProps {
   isOpen: boolean;
@@ -12,17 +13,21 @@ export const Modal: React.FC<ModalProps> = ({
   isOpen,
   onClose,
   title,
-  icon = '🏆',
+  icon,
   children,
 }) => {
   if (!isOpen) return null;
 
   return (
     <div className="modal-overlay active">
-      <div className="clay-modal">
-        {icon && (
-          <div style={{ fontSize: '4.5rem', marginBottom: '1.5rem', animation: 'floating 2s ease-in-out infinite alternate' }}>
+      <div className="clay-modal flex flex-col items-center">
+        {icon ? (
+          <div style={{ fontSize: '3.5rem', marginBottom: '1.5rem' }}>
             {icon}
+          </div>
+        ) : (
+          <div className="w-20 h-20 rounded-3xl bg-amber-100 text-amber-600 flex items-center justify-center mb-6 shadow-inner border border-amber-200">
+            <TrophyIcon className="w-12 h-12" />
           </div>
         )}
         {title && (

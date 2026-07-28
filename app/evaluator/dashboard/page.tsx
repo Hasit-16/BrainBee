@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUserSession } from '@/lib/store';
 import { createClient, getCurrentUserId } from '@/lib/supabase/client';
+import { UserIcon, TrophyIcon, StarIcon, CheckIcon } from '@/components/ui/Icons';
 
 interface StudentRecord {
   id: string;
@@ -42,7 +43,7 @@ const fallbackStudents: StudentRecord[] = [
     email: 'test@example.com',
     section: 'Grade 5 - Section A',
     subject: 'Mathematics',
-    avatar: '👨‍🎓',
+    avatar: 'STUDENT',
     baselineTier: 'ADVANCED',
     moduleStage: { totalCircles: 1, completed: 1, inProgress: 0 },
     avgScore: 85,
@@ -51,8 +52,8 @@ const fallbackStudents: StudentRecord[] = [
       { levelId: 'INTERMEDIATE', score: 4, total: 5, completedAt: '2026-07-27', status: 'COMPLETED' },
     ],
     badges: [
-      { id: 'FLAWLESS', name: 'Flawless Master', icon: '🏆', earnedAt: '2026-07-27' },
-      { id: 'ADVANCED_MASTER', name: 'Advanced Solver', icon: '⚡', earnedAt: '2026-07-27' },
+      { id: 'FLAWLESS', name: 'Flawless Master', icon: 'FLAWLESS', earnedAt: '2026-07-27' },
+      { id: 'ADVANCED_MASTER', name: 'Advanced Solver', icon: 'ADVANCED', earnedAt: '2026-07-27' },
     ],
   },
   {
@@ -61,7 +62,7 @@ const fallbackStudents: StudentRecord[] = [
     email: 'priya.s@brainbee.edu',
     section: 'Grade 5 - Section A',
     subject: 'Mathematics',
-    avatar: '👩‍🎓',
+    avatar: 'STUDENT',
     baselineTier: 'INTERMEDIATE',
     moduleStage: { totalCircles: 2, completed: 1, inProgress: 1 },
     avgScore: 32, // < 40% triggers brute-force alert text-red-500
@@ -70,7 +71,7 @@ const fallbackStudents: StudentRecord[] = [
       { levelId: 'INTERMEDIATE', score: 2, total: 5, completedAt: '2026-07-27', status: 'IN_PROGRESS' },
     ],
     badges: [
-      { id: 'PERSEVERANCE', name: 'Perseverance', icon: '🌟', earnedAt: '2026-07-26' },
+      { id: 'PERSEVERANCE', name: 'Perseverance', icon: 'PERSEVERANCE', earnedAt: '2026-07-26' },
     ],
   },
   {
@@ -79,7 +80,7 @@ const fallbackStudents: StudentRecord[] = [
     email: 'marcus.c@brainbee.edu',
     section: 'Grade 5 - Section B',
     subject: 'Science',
-    avatar: '👦',
+    avatar: 'STUDENT',
     baselineTier: 'BEGINNER',
     moduleStage: { totalCircles: 3, completed: 2, inProgress: 0 },
     avgScore: 78,
@@ -87,7 +88,7 @@ const fallbackStudents: StudentRecord[] = [
       { levelId: 'BEGINNER', score: 4, total: 5, completedAt: '2026-07-25', status: 'COMPLETED' },
     ],
     badges: [
-      { id: 'FLAWLESS', name: 'Flawless Master', icon: '🏆', earnedAt: '2026-07-25' },
+      { id: 'FLAWLESS', name: 'Flawless Master', icon: 'FLAWLESS', earnedAt: '2026-07-25' },
     ],
   },
   {
@@ -96,7 +97,7 @@ const fallbackStudents: StudentRecord[] = [
     email: 'sarah.m@brainbee.edu',
     section: 'Grade 6 - Section A',
     subject: 'English',
-    avatar: '👧',
+    avatar: 'STUDENT',
     baselineTier: 'BEGINNER',
     moduleStage: { totalCircles: 3, completed: 0, inProgress: 1 },
     avgScore: 38, // < 40% triggers brute-force alert text-red-500
@@ -148,108 +149,103 @@ export default function MinimalistTeacherDashboard() {
 
             const baselineTier: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'UNASSIGNED' =
               userTiers.length > 0 && userTiers[0].assigned_tier
-                ? (userTiers[0].assigned_tier as any)
+                ? (userTiers[0].assigned_tier.toUpperCase() as any)
                 : 'BEGINNER';
 
-            const totalCircles =
-              baselineTier === 'ADVANCED' ? 1 : baselineTier === 'INTERMEDIATE' ? 2 : 3;
+            const totalCircles = baselineTier === 'BEGINNER' ? 3 : baselineTier === 'INTERMEDIATE' ? 2 : 1;
             const completedCount = userProgress.filter((p) => p.is_completed).length;
+            const inProgressCount = userProgress.length > completedCount ? 1 : 0;
 
-            let avgScore = 75;
-            if (userQuizzes.length > 0) {
-              const sum = userQuizzes.reduce((acc, q) => acc + (q.first_attempt_score || 0), 0);
-              const maxPossible = userQuizzes.reduce((acc, q) => acc + (q.total_questions || 5), 0);
-              avgScore = Math.round((sum / (maxPossible || 1)) * 100);
-            }
+            const totalScore = userQuizzes.reduce((acc, q) => acc + (q.score || 0), 0);
+            const totalPossible = userQuizzes.reduce((acc, q) => acc + (q.total_questions || 5), 0);
+            const avgScore = totalPossible > 0 ? Math.round((totalScore / totalPossible) * 100) : 75;
 
             return {
               id: prof.id,
-              name: prof.full_name || prof.name || `Student ${idx + 1}`,
-              email: prof.email || `student_${idx + 1}@brainbee.edu`,
-              section: idx % 2 === 0 ? 'Grade 5 - Section A' : 'Grade 5 - Section B',
-              subject: userTiers[0]?.subject_id === 'science' ? 'Science' : 'Mathematics',
-              avatar: idx % 2 === 0 ? '👨‍🎓' : '👩‍🎓',
+              name: prof.full_name || prof.email?.split('@')[0] || `Student #${idx + 1}`,
+              email: prof.email || 'student@brainbee.edu',
+              section: prof.grade_section || 'Grade 5 - Section A',
+              subject: 'Mathematics',
+              avatar: 'STUDENT',
               baselineTier,
               moduleStage: {
                 totalCircles,
-                completed: Math.min(completedCount, totalCircles),
-                inProgress: completedCount < totalCircles ? 1 : 0,
+                completed: Math.min(totalCircles, completedCount),
+                inProgress: inProgressCount,
               },
               avgScore,
               quizLogs: userQuizzes.map((q) => ({
                 levelId: q.level_id || 'BEGINNER',
-                score: q.first_attempt_score || 0,
+                score: q.score || 0,
                 total: q.total_questions || 5,
-                completedAt: q.completed_at ? q.completed_at.split('T')[0] : '2026-07-27',
-                status: q.status || 'COMPLETED',
+                completedAt: new Date(q.created_at).toISOString().split('T')[0],
+                status: 'COMPLETED',
               })),
               badges: userBadges.map((b) => ({
                 id: b.badge_id,
-                name: b.badge_id === 'FLAWLESS' ? 'Flawless Master' : 'Perseverance Award',
-                icon: b.badge_id === 'FLAWLESS' ? '🏆' : '🌟',
-                earnedAt: b.earned_at ? b.earned_at.split('T')[0] : '2026-07-27',
+                name: b.badge_id === 'FLAWLESS' ? 'Flawless Master' : 'Perseverance Star',
+                icon: b.badge_id,
+                earnedAt: new Date(b.created_at).toISOString().split('T')[0],
               })),
             };
           });
 
-          if (merged.length > 0) {
-            setStudents(merged);
-          }
+          setStudents(merged);
         }
       } catch (e) {
-        console.warn('Teacher Analytics fetch notice: using fallback roster');
+        console.warn('Teacher analytics fetch notice: using fallback data');
       }
     }
-
     loadTeacherAnalyticsData();
   }, []);
 
-  if (!isLoaded || role !== 'TEACHER') {
-    return null;
-  }
+  const handleLogout = async () => {
+    await logout();
+    router.push('/login');
+  };
 
-  // Filter students based on Subject & Section dropdown selections
-  const filteredStudents = students.filter((s) => {
-    const subjectMatch = selectedSubject === 'All Subjects' || s.subject === selectedSubject;
-    const sectionMatch = selectedSection === 'All Classes' || s.section === selectedSection;
-    return subjectMatch && sectionMatch;
+  // Filtering Logic
+  const filteredStudents = students.filter((student) => {
+    const matchesSubject =
+      selectedSubject === 'All Subjects' || student.subject === selectedSubject;
+    const matchesSection =
+      selectedSection === 'All Classes' || student.section === selectedSection;
+    return matchesSubject && matchesSection;
   });
 
   return (
-    <main className="min-h-screen bg-white text-gray-900 font-sans p-8 max-w-7xl mx-auto flex flex-col gap-8">
-      {/* MINIMALIST HEADER BAR */}
-      <header className="flex flex-wrap items-center justify-between border-b border-gray-200 pb-6 gap-4">
+    <main className="min-h-screen bg-white text-gray-900 p-8 max-w-7xl mx-auto flex flex-col gap-8 font-sans">
+      {/* HEADER BAR */}
+      <header className="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-gray-200">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-semibold tracking-wider text-gray-500 uppercase">
-              BrainBee Educator Portal
-            </span>
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-          </div>
-          <h1 className="text-3xl font-light tracking-tight text-gray-900">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900">
             Teacher Analytics Dashboard
           </h1>
+          <p className="text-sm text-gray-500 font-medium mt-0.5">
+            Real-time student progress tracking & tier distributions
+          </p>
         </div>
 
-        <div className="flex items-center gap-4 text-sm">
-          <span className="text-gray-600 font-medium">
-            Signed in as <strong className="text-gray-900 font-semibold">{session?.name || 'Ms. Clara'}</strong>
-          </span>
+        <div className="flex items-center gap-4">
+          <div className="text-right">
+            <div className="text-sm font-semibold text-gray-900">
+              {session?.name || 'Educator Panel'}
+            </div>
+            <div className="text-xs text-gray-500">{session?.instituteId ? `${session.instituteId}@brainbee.edu` : 'teacher@brainbee.edu'}</div>
+          </div>
+
           <button
-            onClick={async () => {
-              await logout();
-              router.push('/login');
-            }}
-            className="text-red-600 hover:text-red-800 transition-colors font-medium border-l border-gray-200 pl-4"
+            onClick={handleLogout}
+            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-md transition-colors cursor-pointer border border-gray-200"
           >
-            Sign Out
+            Logout
           </button>
         </div>
       </header>
 
-      {/* STEP 1: CONSOLIDATED LAYOUT & FLAT HORIZONTAL FILTERS */}
-      <section className="flex flex-wrap items-center justify-between gap-6 border-b border-gray-100 pb-4">
-        <div className="flex flex-wrap items-center gap-6 text-sm">
+      {/* STEP 1: TOP CONTROL BAR (FLAT HORIZONTAL FILTERS) */}
+      <section className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-lg bg-gray-50 border border-gray-200">
+        <div className="flex flex-wrap items-center gap-6">
           {/* Subject Filter */}
           <div className="flex items-center gap-2">
             <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
@@ -311,7 +307,6 @@ export default function MinimalistTeacherDashboard() {
               </tr>
             ) : (
               filteredStudents.map((student) => {
-                // Circle stage rendering
                 const circles = [];
                 for (let i = 0; i < student.moduleStage.totalCircles; i++) {
                   if (i < student.moduleStage.completed) {
@@ -323,7 +318,6 @@ export default function MinimalistTeacherDashboard() {
                   }
                 }
 
-                // Score threshold alert check (< 40% triggers muted red text-red-500)
                 const isBruteForceAlert = student.avgScore < 40;
 
                 return (
@@ -331,8 +325,8 @@ export default function MinimalistTeacherDashboard() {
                     {/* 1. Student Name & Avatar */}
                     <td className="py-4 px-4">
                       <div className="flex items-center gap-3">
-                        <span className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-base">
-                          {student.avatar}
+                        <span className="w-8 h-8 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center">
+                          <UserIcon className="w-4 h-4" />
                         </span>
                         <div>
                           <div className="font-semibold text-gray-900">{student.name}</div>
@@ -348,17 +342,17 @@ export default function MinimalistTeacherDashboard() {
                       </span>
                     </td>
 
-                    {/* 3. Module Stage (Scaled Minimalist Circle Icons) */}
+                    {/* 3. Module Stage */}
                     <td className="py-4 px-4">
                       <div className="flex items-center gap-1.5" title={`${student.moduleStage.completed} of ${student.moduleStage.totalCircles} Completed`}>
                         {circles}
                       </div>
                     </td>
 
-                    {/* 4. Avg. First-Attempt Score (Muted Red < 40%) */}
+                    {/* 4. Avg. First-Attempt Score */}
                     <td className="py-4 px-4">
                       <span className={isBruteForceAlert ? 'text-red-500 font-semibold flex items-center gap-1' : 'text-gray-900 font-medium'}>
-                        {isBruteForceAlert && <span>⚠️</span>}
+                        {isBruteForceAlert && <span className="text-xs uppercase bg-red-100 text-red-700 px-1.5 py-0.5 rounded">Alert</span>}
                         {student.avgScore}%
                       </span>
                     </td>
@@ -380,21 +374,16 @@ export default function MinimalistTeacherDashboard() {
         </table>
       </section>
 
-      {/* STEP 3: DETAILED STUDENT OVERLAY (SLIDE-OUT PANEL) */}
+      {/* STEP 3: SLIDE-OUT OVERLAY PANEL FOR STUDENT DETAILS */}
       {activeStudentOverlay && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/20 backdrop-blur-xs transition-opacity">
-          <div
-            className="fixed inset-0"
-            onClick={() => setActiveStudentOverlay(null)}
-          ></div>
-
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/30 backdrop-blur-xs animate-fade-in">
           <div className="relative w-full max-w-lg bg-white h-full shadow-2xl border-l border-gray-200 p-6 flex flex-col justify-between overflow-y-auto z-10">
             <div className="flex flex-col gap-6">
               {/* Overlay Panel Header */}
               <div className="flex items-center justify-between border-b border-gray-200 pb-4">
                 <div className="flex items-center gap-3">
-                  <span className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-xl">
-                    {activeStudentOverlay.avatar}
+                  <span className="w-10 h-10 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center">
+                    <UserIcon className="w-5 h-5" />
                   </span>
                   <div>
                     <h3 className="text-xl font-semibold text-gray-900">
@@ -461,10 +450,10 @@ export default function MinimalistTeacherDashboard() {
                 )}
               </div>
 
-              {/* Earned Qualitative Badges Section */}
+              {/* Earned Badges Section */}
               <div className="flex flex-col gap-3">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500">
-                  Earned Qualitative Badges
+                  Qualitative Badges
                 </h4>
                 {activeStudentOverlay.badges.length === 0 ? (
                   <p className="text-xs text-gray-500">No qualitative badges earned yet.</p>
@@ -475,7 +464,9 @@ export default function MinimalistTeacherDashboard() {
                         key={idx}
                         className="p-3 rounded-lg border border-gray-200 bg-white flex items-center gap-3"
                       >
-                        <span className="text-2xl">{badge.icon}</span>
+                        <span className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-100">
+                          <TrophyIcon className="w-4 h-4" />
+                        </span>
                         <div>
                           <span className="font-semibold text-xs text-gray-900 block">
                             {badge.name}

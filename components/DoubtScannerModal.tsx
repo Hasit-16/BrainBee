@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { playSound } from '@/lib/sound';
+import { SearchIcon, CameraIcon, CheckIcon, BackArrowIcon } from '@/components/ui/Icons';
 
 export interface DoubtScannerModalProps {
   isOpen: boolean;
@@ -106,15 +107,15 @@ export const DoubtScannerModal: React.FC<DoubtScannerModalProps> = ({
         {/* MODAL HEADER */}
         <div className="flex items-center justify-between border-b border-slate-200/60 pb-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-amber-400/20 text-amber-600 flex items-center justify-center text-2xl shadow-[inset_2px_3px_5px_rgba(0,0,0,0.08)] border border-amber-300/40">
-              🔍
+            <div className="w-12 h-12 rounded-2xl bg-amber-400/20 text-amber-700 flex items-center justify-center shadow-[inset_2px_3px_5px_rgba(0,0,0,0.08)] border border-amber-300/40">
+              <SearchIcon className="w-6 h-6" />
             </div>
             <div>
               <h2 className="text-xl md:text-2xl font-extrabold text-slate-800 tracking-tight">
                 AI Doubt Scanner
               </h2>
               <p className="text-xs font-bold text-slate-500">
-                Snap or upload your Math & EVS questions for step-by-step guidance!
+                Snap or upload your Math & EVS questions for step-by-step guidance
               </p>
             </div>
           </div>
@@ -141,7 +142,9 @@ export const DoubtScannerModal: React.FC<DoubtScannerModalProps> = ({
         {/* INITIAL STATE / UPLOAD TRIGGER BUTTON */}
         {!imagePreview && !loading && (
           <div className="flex flex-col items-center justify-center p-8 bg-white/70 rounded-3xl border-2 border-dashed border-slate-300/80 text-center gap-6 shadow-[inset_2px_4px_8px_rgba(0,0,0,0.03)]">
-            <div className="text-6xl animate-bounce">📸</div>
+            <div className="w-16 h-16 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center shadow-inner border border-amber-200">
+              <CameraIcon className="w-8 h-8" />
+            </div>
             <div className="max-w-md">
               <h3 className="text-lg font-extrabold text-slate-800 mb-1">
                 Got a tricky question?
@@ -154,22 +157,21 @@ export const DoubtScannerModal: React.FC<DoubtScannerModalProps> = ({
             {/* LARGE PUFFY BRIGHTLY COLORED CLAY BUTTON */}
             <button
               onClick={handleTriggerFileInput}
-              className="bg-gradient-to-b from-amber-300 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-600 text-amber-950 font-extrabold text-lg shadow-[0_10px_20px_rgba(245,158,11,0.35)] border-t-2 border-white/80 rounded-3xl py-4 px-8 hover:-translate-y-0.5 active:translate-y-1 transition-all duration-150 cursor-pointer flex items-center justify-center gap-3 w-full sm:w-auto"
+              className="bg-gradient-to-b from-amber-300 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-600 text-amber-950 font-extrabold text-base shadow-[0_10px_20px_rgba(245,158,11,0.35)] border-t-2 border-white/80 rounded-3xl py-3.5 px-8 hover:-translate-y-0.5 active:translate-y-1 transition-all duration-150 cursor-pointer flex items-center justify-center gap-3 w-full sm:w-auto"
             >
-              <span>📷</span>
+              <CameraIcon className="w-5 h-5" />
               <span>Upload or Snap Photo</span>
             </button>
           </div>
         )}
 
-        {/* LOADING STATE (FRIENDLY PULSING ANIMATION) */}
+        {/* LOADING STATE */}
         {loading && (
           <div className="flex flex-col items-center justify-center p-10 bg-white/80 rounded-3xl border border-white/80 shadow-[inset_2px_4px_8px_rgba(0,0,0,0.02)] text-center gap-6">
             <div className="relative">
-              {/* Friendly pulsing avatar background ring */}
               <div className="w-24 h-24 rounded-full bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 animate-ping opacity-30 absolute inset-0"></div>
-              <div className="w-24 h-24 rounded-full bg-gradient-to-b from-amber-200 to-amber-400 flex items-center justify-center text-4xl shadow-[0_8px_20px_rgba(245,158,11,0.3)] border-2 border-white relative z-10 animate-pulse">
-                🔍
+              <div className="w-24 h-24 rounded-full bg-gradient-to-b from-amber-200 to-amber-400 text-amber-900 flex items-center justify-center shadow-[0_8px_20px_rgba(245,158,11,0.3)] border-2 border-white relative z-10 animate-pulse">
+                <SearchIcon className="w-10 h-10" />
               </div>
             </div>
 
@@ -178,7 +180,7 @@ export const DoubtScannerModal: React.FC<DoubtScannerModalProps> = ({
                 Analyzing Your Question...
               </h3>
               <p className="text-xs font-bold text-amber-700 mt-1">
-                Reading your image and preparing step-by-step hints ✨
+                Reading your image and preparing step-by-step hints
               </p>
             </div>
 
@@ -194,7 +196,7 @@ export const DoubtScannerModal: React.FC<DoubtScannerModalProps> = ({
         {/* ERROR STATE */}
         {error && (
           <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-700 text-sm font-bold flex items-center justify-between">
-            <span>⚠️ {error}</span>
+            <span>Notice: {error}</span>
             <button
               onClick={handleTriggerFileInput}
               className="px-3 py-1 bg-rose-600 text-white text-xs font-extrabold rounded-xl shadow cursor-pointer hover:bg-rose-700"
@@ -204,18 +206,17 @@ export const DoubtScannerModal: React.FC<DoubtScannerModalProps> = ({
           </div>
         )}
 
-        {/* RESULT DISPLAY (STARK WHITE CLAY CARD CONTAINER) */}
+        {/* RESULT DISPLAY */}
         {!loading && aiResolution && (
           <div className="flex flex-col gap-5">
             {/* EXTRACTED QUESTION PREVIEW */}
             {extractedText && (
               <div className="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-4 flex items-start gap-3 shadow-[inset_1px_2px_4px_rgba(0,0,0,0.03)]">
-                <span className="text-xl">📌</span>
+                <span className="bg-amber-200/60 text-amber-900 font-extrabold text-xs px-2.5 py-1 rounded-lg">
+                  Target Question
+                </span>
                 <div>
-                  <h4 className="text-xs font-extrabold text-amber-900 uppercase tracking-wider">
-                    Extracted Question
-                  </h4>
-                  <p className="text-sm font-bold text-amber-950 mt-0.5 italic">
+                  <p className="text-sm font-bold text-amber-950 italic">
                     {extractedText}
                   </p>
                 </div>
@@ -225,7 +226,7 @@ export const DoubtScannerModal: React.FC<DoubtScannerModalProps> = ({
             {/* STARK WHITE CLAY CARD FOR AI RESOLUTION */}
             <div className="bg-white shadow-[inset_2px_4px_8px_rgba(0,0,0,0.03),0_10px_25px_rgba(0,0,0,0.05)] border border-slate-200/80 rounded-3xl p-6 md:p-7 relative overflow-hidden">
               <div className="flex items-center gap-2 mb-4 text-emerald-600 font-extrabold text-sm uppercase tracking-wide border-b border-slate-100 pb-2">
-                <span>🤖</span>
+                <CheckIcon />
                 <span>Encouraging AI Tutor Explanation</span>
               </div>
 
@@ -241,14 +242,16 @@ export const DoubtScannerModal: React.FC<DoubtScannerModalProps> = ({
                 onClick={handleReset}
                 className="bg-slate-200/80 hover:bg-slate-300 text-slate-700 font-extrabold text-sm px-6 py-3 rounded-2xl shadow-[0_4px_10px_rgba(0,0,0,0.05)] hover:-translate-y-0.5 transition-all cursor-pointer flex items-center gap-2"
               >
-                <span>🔄 Scan Another Question</span>
+                <CameraIcon className="w-4 h-4" />
+                <span>Scan Another Question</span>
               </button>
 
               <button
                 onClick={handleClose}
                 className="bg-gradient-to-b from-emerald-400 to-emerald-500 hover:from-emerald-500 hover:to-emerald-600 text-white font-extrabold text-sm px-6 py-3 rounded-2xl shadow-[0_6px_16px_rgba(16,185,129,0.3)] border-t border-white/50 hover:-translate-y-0.5 active:translate-y-1 transition-all cursor-pointer flex items-center gap-2"
               >
-                <span>Got It! Thanks 🌟</span>
+                <CheckIcon />
+                <span>Got It! Thanks</span>
               </button>
             </div>
           </div>

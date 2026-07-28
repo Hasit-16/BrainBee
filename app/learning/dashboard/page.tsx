@@ -7,6 +7,9 @@ import { useUserSession } from '@/lib/store';
 import { mockData, badgeDefinitions } from '@/lib/mockData';
 import { createClient, getCurrentUserId } from '@/lib/supabase/client';
 
+import { playSound } from '@/lib/sound';
+import { DoubtScannerModal } from '@/components/DoubtScannerModal';
+
 export default function GlobalStudentDashboard() {
   const router = useRouter();
   const { role, isLoaded, session, logout } = useUserSession();
@@ -18,6 +21,7 @@ export default function GlobalStudentDashboard() {
 
   const [earnedBadges, setEarnedBadges] = useState<string[]>([]);
   const [levelProgressMap, setLevelProgressMap] = useState<Record<string, number>>({});
+  const [isDoubtModalOpen, setIsDoubtModalOpen] = useState(false);
 
   useEffect(() => {
     if (isLoaded && role !== 'STUDENT') {
@@ -91,7 +95,13 @@ export default function GlobalStudentDashboard() {
         </div>
 
         <div className="flex items-center gap-3">
-          <button className="rounded-full px-5 py-2.5 bg-amber-100 hover:bg-amber-200 text-amber-800 font-bold text-sm shadow-md shadow-amber-200/50 flex items-center gap-2 cursor-pointer border border-amber-200/60">
+          <button
+            onClick={() => {
+              playSound('click');
+              setIsDoubtModalOpen(true);
+            }}
+            className="rounded-full px-5 py-2.5 bg-amber-100 hover:bg-amber-200 text-amber-800 font-bold text-sm shadow-md shadow-amber-200/50 flex items-center gap-2 cursor-pointer border border-amber-200/60 hover:translate-y-0.5 transition-all"
+          >
             🔍 Doubt Scan
           </button>
           <div className="w-12 h-12 rounded-full bg-blue-500/10 border-2 border-blue-500/20 text-blue-600 flex items-center justify-center font-extrabold text-xl shadow-inner">
@@ -217,6 +227,11 @@ export default function GlobalStudentDashboard() {
           })}
         </div>
       </section>
+      {/* DOUBT SCANNER MODAL */}
+      <DoubtScannerModal
+        isOpen={isDoubtModalOpen}
+        onClose={() => setIsDoubtModalOpen(false)}
+      />
     </main>
   );
 }
