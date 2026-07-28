@@ -10,6 +10,7 @@ import { Modal } from '@/components/ui/Modal';
 import { useUserSession, ChapterTierState } from '@/lib/store';
 import { mockData, Subject, Chapter } from '@/lib/mockData';
 import { createClient, getCurrentUserId } from '@/lib/supabase/client';
+import { playSound } from '@/lib/sound';
 
 export default function ChapterLandingPage() {
   const router = useRouter();
@@ -111,12 +112,13 @@ export default function ChapterLandingPage() {
   const isIntCompleted = Boolean(completedLevels['INTERMEDIATE'] || completedQuizTopics?.['INTERMEDIATE'] || completedQuizTopics?.['top_int_01']);
   const isAdvCompleted = Boolean(completedLevels['ADVANCED'] || completedQuizTopics?.['ADVANCED'] || completedQuizTopics?.['top_adv_01']);
 
-  let isBegUnlocked = false;
+  // Progressive unlocking rules
+  let isBegUnlocked = true;
   let isIntUnlocked = false;
   let isAdvUnlocked = false;
 
   if (hasDiagnosticBeenTaken) {
-    if (assignedTier === 'ADVANCED') {
+    if (assignedTier === 'COMPLETED' || assignedTier === 'ADVANCED' || isAdvCompleted) {
       isBegUnlocked = true;
       isIntUnlocked = true;
       isAdvUnlocked = true;
@@ -126,85 +128,106 @@ export default function ChapterLandingPage() {
       isAdvUnlocked = isIntCompleted;
     } else {
       isBegUnlocked = true;
-      isIntUnlocked = isBegCompleted;
+      isIntUnlocked = isBegCompleted || isIntCompleted;
       isAdvUnlocked = isIntCompleted;
     }
   }
 
+  // Any level that is completed is guaranteed to be unlocked
+  if (isBegCompleted) isBegUnlocked = true;
+  if (isIntCompleted) isIntUnlocked = true;
+  if (isAdvCompleted) isAdvUnlocked = true;
+
+  const clayCardFormula = "bg-white/90 backdrop-blur-sm shadow-[10px_20px_30px_rgba(0,0,0,0.05)] border border-white/60 relative overflow-hidden before:absolute before:inset-0 before:shadow-[inset_2px_4px_8px_rgba(255,255,255,0.8)] before:pointer-events-none rounded-[2rem]";
+
   return (
-    <main className="min-h-screen p-6 max-w-6xl mx-auto flex flex-col gap-8">
+    <main className="min-h-screen bg-[#f4f7fb] text-slate-800 p-6 md:p-10 max-w-7xl mx-auto flex flex-col gap-8 font-sans">
       {/* Header Bar */}
-      <header className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-3xl bg-white/70 backdrop-blur border border-white/80">
-        <div className="flex items-center gap-3">
-          <Link href={`/learning/${currentSubject.subject_id}`}>
-            <Button variant="white" size="sm">
+      <header className={`${clayCardFormula} p-6 flex flex-wrap items-center justify-between gap-6`}>
+        <div className="flex items-center gap-4">
+          <Link href={`/learning/${currentSubject.subject_id}`} onClick={() => playSound('click')}>
+            <button className="bg-gradient-to-b from-slate-100 to-slate-200 text-slate-700 font-bold text-xs rounded-full px-5 py-2.5 shadow-sm border border-white/80 hover:translate-y-0.5 transition-all cursor-pointer">
               ← {currentSubject.subject_name}
-            </Button>
+            </button>
           </Link>
-          <div className="flex items-center gap-2">
-            <span className="text-3xl">{currentSubject.icon}</span>
-            <h1 className="text-2xl font-bold color-primary">
-              {currentChapter.chapter_name}
-            </h1>
-            <Badge variant="yellow">{currentSubject.standard}</Badge>
+          <div className="flex items-center gap-3">
+            <span className="w-12 h-12 rounded-2xl bg-blue-100/70 border border-blue-200/60 flex items-center justify-center text-3xl shadow-[inset_2px_4px_6px_rgba(0,0,0,0.06)]">
+              {currentSubject.icon}
+            </span>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-800">
+                {currentChapter.chapter_name}
+              </h1>
+              <p className="text-xs font-semibold text-slate-500">{currentSubject.standard} • Chapter Module Hub</p>
+            </div>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          <Button variant="warning" size="md" className="flex items-center gap-2">
+          <button className="bg-gradient-to-b from-amber-200 to-amber-300 text-amber-900 shadow-[0_6px_12px_rgba(245,158,11,0.3)] border-t border-white/80 rounded-full font-bold text-sm px-5 py-2.5 flex items-center gap-2 cursor-pointer">
             🔍 Doubt Scan
-          </Button>
-          <div className="w-10 h-10 rounded-2xl bg-blue-500 text-white flex items-center justify-center font-bold text-lg">
-            👤
-          </div>
+          </button>
         </div>
       </header>
 
       {/* PRE-DIAGNOSTIC STATE BANNER */}
       {!hasDiagnosticBeenTaken ? (
-        <Card variant="white" className="p-8 flex flex-col md:flex-row items-center justify-between gap-6 border-2 border-blue-400">
-          <div className="flex items-start gap-4">
-            <div className="text-5xl animate-bounce">📊</div>
+        <div className={`${clayCardFormula} p-8 flex flex-col md:flex-row items-center justify-between gap-6 border-2 border-blue-400/80`}>
+          <div className="flex items-start gap-5">
+            <div className="w-16 h-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-4xl shadow-inner shrink-0 border border-blue-100 animate-bounce">
+              📊
+            </div>
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <Badge variant="orange">Diagnostic Required</Badge>
-                <Badge variant="yellow">5 Questions</Badge>
+                <span className="bg-amber-100 text-amber-800 font-extrabold text-xs px-3 py-1 rounded-full border border-amber-200">
+                  Diagnostic Required
+                </span>
+                <span className="bg-blue-100 text-blue-700 font-bold text-xs px-3 py-1 rounded-full border border-blue-200">
+                  5 Questions
+                </span>
               </div>
-              <h2 className="text-3xl font-bold color-primary mb-1">
+              <h2 className="text-3xl font-extrabold text-slate-800 mb-1">
                 Start Chapter Diagnostic
               </h2>
-              <p className="text-base opacity-80 max-w-xl">
-                Take the 5-question baseline assessment to evaluate your knowledge and unlock your personalized learning tier. All topics are currently locked until completed.
+              <p className="text-sm font-semibold text-slate-600 max-w-xl leading-relaxed">
+                Take the 5-question baseline assessment to evaluate your knowledge and unlock your personalized learning tier. All difficulty levels are locked until completed.
               </p>
             </div>
           </div>
 
           <Link
             href={`/learning/${subjectId}/${chapterId}/diagnostic`}
-            className="no-underline shrink-0"
+            onClick={() => playSound('click')}
+            className="no-underline shrink-0 w-full md:w-auto"
           >
-            <Button variant="secondary" size="lg" className="px-8 py-4 text-xl flex items-center gap-2">
+            <button className="clay-btn-green w-full md:w-auto">
               🚀 Start Chapter Diagnostic
-            </Button>
+            </button>
           </Link>
-        </Card>
+        </div>
       ) : (
         /* POST-DIAGNOSTIC HEADER / REVISION HUB BANNER */
-        <Card variant="white" className="p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className={`${clayCardFormula} p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6`}>
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <Badge variant="green">✓ Diagnostic Complete</Badge>
-              <Badge variant="purple">Assigned Tier: {assignedTier}</Badge>
+            <div className="flex items-center gap-2 mb-2.5 flex-wrap">
+              <span className="bg-emerald-100 text-emerald-700 font-extrabold text-xs px-3.5 py-1 rounded-full border border-emerald-200 shadow-[inset_0px_2px_4px_rgba(0,0,0,0.06)]">
+                ✓ Diagnostic Complete
+              </span>
+              <span className="bg-purple-100 text-purple-700 font-extrabold text-xs px-3.5 py-1 rounded-full border border-purple-200 shadow-[inset_0px_2px_4px_rgba(0,0,0,0.06)]">
+                Assigned Tier: {assignedTier}
+              </span>
               {isBegCompleted && isIntCompleted && isAdvCompleted && (
-                <Badge variant="yellow">🏆 Chapter Mastered</Badge>
+                <span className="bg-amber-100 text-amber-800 font-extrabold text-xs px-3.5 py-1 rounded-full border border-amber-200 shadow-[inset_0px_2px_4px_rgba(0,0,0,0.06)]">
+                  🏆 Chapter Mastered
+                </span>
               )}
             </div>
-            <h2 className="text-2xl font-bold color-primary">
+            <h2 className="text-2xl md:text-3xl font-extrabold text-slate-800 mb-1">
               {isBegCompleted && isIntCompleted && isAdvCompleted
                 ? '🏆 Chapter Mastered & Revision Hub'
                 : '🚀 Active Learning Progression'}
             </h2>
-            <p className="text-sm opacity-80">
+            <p className="text-xs md:text-sm font-semibold text-slate-500 max-w-2xl leading-relaxed">
               {isBegCompleted && isIntCompleted && isAdvCompleted
                 ? 'You have completed all difficulty levels! You can freely re-open and review any micro-lesson module below.'
                 : 'Your learning pipeline is active. Continue where you left off or review completed modules.'}
@@ -217,128 +240,131 @@ export default function ChapterLandingPage() {
                 !isBegCompleted
                   ? `/learning/${subjectId}/${chapterId}/BEGINNER/module`
                   : !isIntCompleted
-                  ? `/learning/${subjectId}/${chapterId}/INTERMEDIATE/module`
-                  : `/learning/${subjectId}/${chapterId}/ADVANCED/module`
+                    ? `/learning/${subjectId}/${chapterId}/INTERMEDIATE/module`
+                    : `/learning/${subjectId}/${chapterId}/ADVANCED/module`
               }
-              className="no-underline shrink-0"
+              onClick={() => playSound('click')}
+              className="no-underline shrink-0 w-full md:w-auto"
             >
-              <Button variant="secondary" size="md" className="px-6 py-3 font-bold text-base flex items-center gap-2">
+              <button className="clay-btn-blue w-full md:w-auto">
                 Continue Learning Pipeline 🚀
-              </Button>
+              </button>
             </Link>
           )}
-        </Card>
+        </div>
       )}
 
-      {/* THREE LEVEL CARDS WITH VISUAL LOCK STATES */}
+      {/* THREE LEVEL CARDS (PHASE 21.1: COLOR OVERHAUL & BADGE CONTRAST FIX) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* CARD 1: BEGINNER LEVEL */}
+
+        {/* CARD 1: BEGINNER LEVEL (STEP 1: NEW VIBRANT AMBER CLAY CARD & CONTRAST BADGES) */}
         <div className={`transition-all ${!isBegUnlocked ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
-          <Card
-            variant="white"
-            interactive={isBegUnlocked}
-            className="h-full flex flex-col justify-between p-6"
+          <div
+            className="bg-amber-400 text-white rounded-[2rem] p-6 shadow-[10px_20px_30px_rgba(245,158,11,0.35)] border border-amber-300 relative overflow-hidden before:absolute before:inset-0 before:shadow-[inset_2px_4px_8px_rgba(255,255,255,0.7)] before:pointer-events-none flex flex-col justify-between h-full min-h-[300px]"
           >
             <div>
-              <div className="flex items-center justify-between mb-3">
-                <Badge variant="purple">🟢 Level 1</Badge>
-                <Badge variant={isBegCompleted ? 'green' : isBegUnlocked ? 'purple' : 'orange'}>
+              <div className="flex items-center justify-between mb-4">
+                {/* STEP 4: BADGE SHADOW VALIDATION - Tactile Inset Shadow */}
+                <span className="bg-white text-amber-900 font-extrabold text-xs px-3.5 py-1 rounded-full shadow-[inset_0px_2px_4px_rgba(0,0,0,0.12)] border border-amber-200">
+                  🟡 Level 1
+                </span>
+                <span className="bg-white text-amber-900 font-extrabold text-xs px-3.5 py-1 rounded-full shadow-[inset_0px_2px_4px_rgba(0,0,0,0.12)] border border-amber-200">
                   {isBegCompleted ? '✓ Completed' : isBegUnlocked ? 'Unlocked' : '🔒 Locked'}
-                </Badge>
+                </span>
               </div>
-              <h3 className="text-2xl font-bold mb-2">Beginner Level</h3>
-              <p className="text-sm opacity-80 mb-6">
+              <h3 className="text-2xl font-extrabold text-white mb-2 drop-shadow-sm">Beginner Level</h3>
+              <p className="text-xs font-semibold text-white/95 leading-relaxed mb-6">
                 Foundation micro-lessons and evaluation quiz.
               </p>
             </div>
 
             <Link
               href={`/learning/${subjectId}/${chapterId}/BEGINNER/module`}
+              onClick={() => playSound('click')}
               className="no-underline w-full"
             >
-              <Button
-                variant="secondary"
-                size="md"
-                className="w-full flex justify-center"
+              <button
                 disabled={!isBegUnlocked}
+                className="w-full rounded-full py-3 px-6 bg-white text-amber-900 font-extrabold text-sm shadow-[0_6px_12px_rgba(0,0,0,0.15)] hover:translate-y-0.5 active:translate-y-1 transition-all cursor-pointer border border-white"
               >
                 {isBegCompleted ? 'Review Level 🚀' : 'Start Level 🚀'}
-              </Button>
+              </button>
             </Link>
-          </Card>
+          </div>
         </div>
 
-        {/* CARD 2: INTERMEDIATE LEVEL */}
+        {/* CARD 2: INTERMEDIATE LEVEL (STEP 2: BLUE CARD & CONTRAST BADGES) */}
         <div className={`transition-all ${!isIntUnlocked ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
-          <Card
-            variant="blue"
-            interactive={isIntUnlocked}
-            className="h-full flex flex-col justify-between p-6"
+          <div
+            className="bg-blue-500 text-white rounded-[2rem] p-6 shadow-[10px_20px_30px_rgba(37,99,235,0.35)] border border-blue-400 relative overflow-hidden before:absolute before:inset-0 before:shadow-[inset_2px_4px_8px_rgba(255,255,255,0.6)] before:pointer-events-none flex flex-col justify-between h-full min-h-[300px]"
           >
             <div>
-              <div className="flex items-center justify-between mb-3">
-                <Badge variant="yellow">🔵 Level 2</Badge>
-                <Badge variant={isIntCompleted ? 'green' : isIntUnlocked ? 'blue' : 'orange'}>
+              <div className="flex items-center justify-between mb-4">
+                {/* Left Badge: Clean White + Bold Blue Text */}
+                <span className="bg-white text-blue-600 font-extrabold text-xs px-3.5 py-1 rounded-full shadow-[inset_0px_2px_4px_rgba(0,0,0,0.12)] border border-blue-100">
+                  🔵 Level 2
+                </span>
+                <span className="bg-white text-blue-600 font-extrabold text-xs px-3.5 py-1 rounded-full shadow-[inset_0px_2px_4px_rgba(0,0,0,0.12)] border border-blue-100">
                   {isIntCompleted ? '✓ Completed' : isIntUnlocked ? 'Unlocked' : '🔒 Locked'}
-                </Badge>
+                </span>
               </div>
-              <h3 className="text-2xl font-bold mb-2">Intermediate Level</h3>
-              <p className="text-sm opacity-80 mb-6">
+              <h3 className="text-2xl font-extrabold text-white mb-2 drop-shadow-sm">Intermediate Level</h3>
+              <p className="text-xs font-semibold text-white/95 leading-relaxed mb-6">
                 Targeted intermediate lessons and evaluation quiz.
               </p>
             </div>
 
             <Link
               href={`/learning/${subjectId}/${chapterId}/INTERMEDIATE/module`}
+              onClick={() => playSound('click')}
               className="no-underline w-full"
             >
-              <Button
-                variant="white"
-                size="md"
-                className="w-full flex justify-center"
+              <button
                 disabled={!isIntUnlocked}
+                className="w-full rounded-full py-3 px-6 bg-white text-blue-700 font-extrabold text-sm shadow-[0_6px_12px_rgba(0,0,0,0.15)] hover:translate-y-0.5 active:translate-y-1 transition-all cursor-pointer border border-white"
               >
                 {isIntCompleted ? 'Review Level 🚀' : 'Start Level 🚀'}
-              </Button>
+              </button>
             </Link>
-          </Card>
+          </div>
         </div>
 
-        {/* CARD 3: ADVANCED LEVEL */}
+        {/* CARD 3: ADVANCED LEVEL (STEP 3: PURPLE CARD & CONTRAST BADGES) */}
         <div className={`transition-all ${!isAdvUnlocked ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
-          <Card
-            variant="purple"
-            interactive={isAdvUnlocked}
-            className="h-full flex flex-col justify-between p-6"
+          <div
+            className="bg-purple-500 text-white rounded-[2rem] p-6 shadow-[10px_20px_30px_rgba(147,51,234,0.35)] border border-purple-400 relative overflow-hidden before:absolute before:inset-0 before:shadow-[inset_2px_4px_8px_rgba(255,255,255,0.6)] before:pointer-events-none flex flex-col justify-between h-full min-h-[300px]"
           >
             <div>
-              <div className="flex items-center justify-between mb-3">
-                <Badge variant="orange">🟣 Level 3</Badge>
-                <Badge variant={isAdvCompleted ? 'green' : isAdvUnlocked ? 'purple' : 'orange'}>
+              <div className="flex items-center justify-between mb-4">
+                {/* STEP 3: Left & Right Badges White + Bold Purple Text */}
+                <span className="bg-white text-purple-600 font-extrabold text-xs px-3.5 py-1 rounded-full shadow-[inset_0px_2px_4px_rgba(0,0,0,0.12)] border border-purple-100">
+                  🟣 Level 3
+                </span>
+                <span className="bg-white text-purple-600 font-extrabold text-xs px-3.5 py-1 rounded-full shadow-[inset_0px_2px_4px_rgba(0,0,0,0.12)] border border-purple-100">
                   {isAdvCompleted ? '🏆 Mastered' : isAdvUnlocked ? 'Unlocked' : '🔒 Locked'}
-                </Badge>
+                </span>
               </div>
-              <h3 className="text-2xl font-bold mb-2">Advanced Level</h3>
-              <p className="text-sm opacity-80 mb-6">
+              <h3 className="text-2xl font-extrabold text-white mb-2 drop-shadow-sm">Advanced Level</h3>
+              <p className="text-xs font-semibold text-white/95 leading-relaxed mb-6">
                 High-level challenge lessons and chapter mastery quiz.
               </p>
             </div>
 
             <Link
               href={`/learning/${subjectId}/${chapterId}/ADVANCED/module`}
+              onClick={() => playSound('click')}
               className="no-underline w-full"
             >
-              <Button
-                variant="white"
-                size="md"
-                className="w-full flex justify-center"
+              <button
                 disabled={!isAdvUnlocked}
+                className="w-full rounded-full py-3 px-6 bg-white text-purple-700 font-extrabold text-sm shadow-[0_6px_12px_rgba(0,0,0,0.15)] hover:translate-y-0.5 active:translate-y-1 transition-all cursor-pointer border border-white"
               >
                 {isAdvCompleted ? 'Review Level 🚀' : 'Start Level 🚀'}
-              </Button>
+              </button>
             </Link>
-          </Card>
+          </div>
         </div>
+
       </div>
 
       {/* Gamified Completion Modal */}
@@ -348,20 +374,16 @@ export default function ChapterLandingPage() {
         title="🏆 Chapter Mastered!"
         icon="🎉"
       >
-        <div className="flex flex-col items-center gap-4 text-center">
-          <Badge variant="yellow" className="text-lg px-4 py-1">
-            {currentChapter.chapter_name}
-          </Badge>
-          <p className="text-base">
-            Congratulations! You passed all difficulty levels and mastered this chapter! You earned a new Master Badge!
+        <div className="p-4 flex flex-col items-center text-center gap-4">
+          <p className="text-base text-gray-700 font-medium">
+            Congratulations! You have completed all 3 levels for this chapter.
           </p>
           <Button
             variant="secondary"
-            size="lg"
-            className="mt-2 w-full flex justify-center"
+            size="md"
             onClick={() => setCompletedModalOpen(false)}
           >
-            Awesome! Continue Learning 🚀
+            Awesome! 🚀
           </Button>
         </div>
       </Modal>
