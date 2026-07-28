@@ -27,7 +27,6 @@ export default function LevelModulePage() {
     }
   }, [isLoaded, role, router]);
 
-  // Query level_progress table in Supabase for dynamic userId and levelId
   useEffect(() => {
     async function fetchLevelProgress() {
       try {
@@ -44,20 +43,9 @@ export default function LevelModulePage() {
 
         if (data && typeof data.is_completed === 'boolean') {
           setSupabaseIsCompleted(data.is_completed);
-        } else {
-          // Fallback query on topic_progress for backward compatibility
-          const { data: legacyData } = await supabase
-            .from('topic_progress')
-            .select('is_completed')
-            .eq('user_id', userId)
-            .eq('topic_id', levelId)
-            .maybeSingle();
-          if (legacyData && typeof legacyData.is_completed === 'boolean') {
-            setSupabaseIsCompleted(legacyData.is_completed);
-          }
         }
       } catch (e) {
-        console.warn('Supabase level_progress notice: falling back to local session state');
+        console.warn('Supabase level_progress notice: using local fallback');
       }
     }
     fetchLevelProgress();
@@ -67,60 +55,134 @@ export default function LevelModulePage() {
     return null;
   }
 
-  const levels = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED'];
-  const currentIdx = levels.indexOf(levelId.toUpperCase());
-  const nextLevel = currentIdx !== -1 && currentIdx < levels.length - 1 ? levels[currentIdx + 1] : null;
+  const currentSubject: Subject =
+    mockData.subjects.find((s) => s.subject_id === subjectId) || mockData.subjects[0];
+  const currentChapter: Chapter =
+    currentSubject.chapters.find((c) => c.chapter_id === chapterId) || currentSubject.chapters[0];
 
-  const nextUrl = nextLevel
-    ? `/learning/${subjectId}/${chapterId}/${nextLevel}/module`
-    : `/learning/${subjectId}/${chapterId}`;
-
+  const levelUpper = levelId.toUpperCase();
   const isCompleted =
     typeof supabaseIsCompleted === 'boolean'
       ? supabaseIsCompleted
       : Boolean(completedQuizTopics?.[levelId]);
 
+  const handleStartQuiz = () => {
+    router.push(`/learning/${subjectId}/${chapterId}/${levelId}/quiz`);
+  };
+
+  const handlePauseExit = () => {
+    router.push(`/learning/${subjectId}/${chapterId}`);
+  };
+
   return (
-    <main className="min-h-screen p-6 flex flex-col items-center justify-center">
-      <div className="w-full max-w-xl">
-        <Card variant="white" className="p-8 text-center flex flex-col items-center gap-6">
-          <div className="text-6xl animate-bounce">🚧</div>
-
+    <main className="min-h-screen p-6 max-w-4xl mx-auto flex flex-col gap-6">
+      {/* Top Header Bar */}
+      <header className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-3xl bg-white/70 backdrop-blur border border-white/80">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="white"
+            size="sm"
+            onClick={handlePauseExit}
+            className="cursor-pointer font-bold"
+          >
+            👈 Save & Exit to Chapter
+          </Button>
           <div>
-            <Badge variant={isCompleted ? 'green' : 'yellow'} className="mb-3">
-              {isCompleted ? '✓ Level Completed' : `${levelId.toUpperCase()} Module`}
-            </Badge>
-            <h1 className="text-3xl font-extrabold color-primary mb-2">
-              Adaptive Lesson Module
+            <h1 className="text-xl font-bold color-primary flex items-center gap-2">
+              {currentSubject.icon} {currentChapter.chapter_name}
             </h1>
-            <p className="text-sm opacity-80 max-w-md mx-auto">
-              Level: <span className="font-bold">{levelId}</span> in Chapter <span className="font-bold">{chapterId}</span>.
-            </p>
+            <p className="text-xs opacity-75 font-medium">10-Minute Micro-Lesson</p>
           </div>
+        </div>
 
-          <div className="flex flex-col sm:flex-row items-center gap-4 w-full justify-center pt-2">
-            <Link href={`/learning/${subjectId}/${chapterId}`} className="no-underline w-full sm:w-auto flex-1">
-              <Button variant="white" size="lg" className="w-full flex justify-center">
-                Return to Chapter 👈
-              </Button>
-            </Link>
+        <div className="flex items-center gap-3">
+          <Button variant="warning" size="sm" className="flex items-center gap-2">
+            🔍 Doubt Scan
+          </Button>
+          <Badge variant={levelUpper === 'BEGINNER' ? 'purple' : levelUpper === 'INTERMEDIATE' ? 'blue' : 'orange'}>
+            {levelUpper} LEVEL
+          </Badge>
+        </div>
+      </header>
 
-            {!isCompleted ? (
-              <Link href={`/learning/${subjectId}/${chapterId}/${levelId}/quiz`} className="no-underline w-full sm:w-auto flex-1">
-                <Button variant="secondary" size="lg" className="w-full flex justify-center">
-                  Proceed to Quiz 🎯
-                </Button>
-              </Link>
-            ) : (
-              <Link href={nextUrl} className="no-underline w-full sm:w-auto flex-1">
-                <Button variant="secondary" size="lg" className="w-full flex justify-center">
-                  Proceed to Next Level 🚀
-                </Button>
-              </Link>
-            )}
+      {/* Main Targeted Lesson Card */}
+      <Card variant="white" className="p-8 flex flex-col gap-6">
+        <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+          <div>
+            <Badge variant="yellow" className="mb-2">
+              ⏱️ 10-Minute Focused Micro-Lesson
+            </Badge>
+            <h2 className="text-3xl font-extrabold color-primary">
+              {levelUpper === 'BEGINNER'
+                ? 'Foundations of Fractions & Decimals'
+                : levelUpper === 'INTERMEDIATE'
+                ? 'Converting & Simplifying Decimals'
+                : 'Advanced Problem Solving & Applications'}
+            </h2>
           </div>
-        </Card>
-      </div>
+          <span className="text-5xl">📖</span>
+        </div>
+
+        {/* Lesson Content Sections */}
+        <div className="flex flex-col gap-4 leading-relaxed text-gray-800 font-medium">
+          {levelUpper === 'BEGINNER' ? (
+            <>
+              <div className="p-4 rounded-2xl bg-blue-50 border border-blue-200">
+                <h3 className="font-bold text-blue-900 text-lg mb-1">💡 Key Concept: What is a Fraction?</h3>
+                <p className="text-sm text-blue-950">
+                  A fraction represents a equal part of a whole quantity. The top number (Numerator) represents parts counted, and the bottom number (Denominator) represents total equal divisions.
+                </p>
+              </div>
+              <div className="p-4 rounded-2xl bg-purple-50 border border-purple-200">
+                <h3 className="font-bold text-purple-900 text-lg mb-1">🔢 Example: Visualizing Decimals</h3>
+                <p className="text-sm text-purple-950">
+                  Writing <code className="bg-white px-2 py-0.5 rounded font-bold">1/2</code> is equivalent to <code className="bg-white px-2 py-0.5 rounded font-bold">0.50</code> in decimal notation. Both represent exactly half of a whole unit.
+                </p>
+              </div>
+            </>
+          ) : levelUpper === 'INTERMEDIATE' ? (
+            <>
+              <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200">
+                <h3 className="font-bold text-amber-900 text-lg mb-1">💡 Key Concept: Simplifying Ratios</h3>
+                <p className="text-sm text-amber-950">
+                  To simplify a fraction like <code className="bg-white px-2 py-0.5 rounded font-bold">4/8</code>, divide both numerator and denominator by their greatest common factor (4) to get <code className="bg-white px-2 py-0.5 rounded font-bold">1/2</code>.
+                </p>
+              </div>
+              <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200">
+                <h3 className="font-bold text-emerald-900 text-lg mb-1">🎯 Practice Rule</h3>
+                <p className="text-sm text-emerald-950">
+                  Always check if the denominator can be converted to 10 or 100 for easy decimal representation.
+                </p>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200">
+                <h3 className="font-bold text-rose-900 text-lg mb-1">💡 Advanced Strategy: Multi-Step Decimals</h3>
+                <p className="text-sm text-rose-950">
+                  When combining ratios and percentages, express all terms in uniform decimal formats before performing calculations.
+                </p>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Bottom CTA Action Button */}
+        <div className="border-t border-gray-100 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-xs text-gray-500 font-semibold">
+            {isCompleted ? '✓ You have already mastered this level.' : 'Click below to begin your evaluation quiz.'}
+          </p>
+
+          <Button
+            variant="secondary"
+            size="lg"
+            className="w-full sm:w-auto px-8 cursor-pointer font-bold text-lg"
+            onClick={handleStartQuiz}
+          >
+            {isCompleted ? 'Review Level Quiz 🎯' : 'Proceed to Practice Quiz 🎯'}
+          </Button>
+        </div>
+      </Card>
     </main>
   );
 }

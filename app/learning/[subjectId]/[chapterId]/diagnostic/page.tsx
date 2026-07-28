@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { useUserSession, Tier } from '@/lib/store';
-import { diagnosticQuestions } from '@/lib/mockData';
+import { getDiagnosticQuestions } from '@/lib/mockData';
 import { createClient, getCurrentUserId } from '@/lib/supabase/client';
 
 export default function ChapterDiagnosticPage() {
@@ -18,6 +18,8 @@ export default function ChapterDiagnosticPage() {
 
   const subjectId = (params?.subjectId as string) || 'math';
   const chapterId = (params?.chapterId as string) || 'chap_01';
+
+  const diagnosticQuestions = getDiagnosticQuestions(subjectId, chapterId);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
@@ -125,7 +127,7 @@ export default function ChapterDiagnosticPage() {
         subject_id: subjectId,
         chapter_id: chapterId,
         assigned_tier: assignedTierStr,
-        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       });
     } catch (e) {
       console.warn('Supabase chapter_tiers write notice: proceeding with local session state');
@@ -133,7 +135,7 @@ export default function ChapterDiagnosticPage() {
 
     updateTier(assignedTierStr as Tier, chapterId);
 
-    const targetUrl = `/learning/${subjectId}/${chapterId}`;
+    const targetUrl = `/learning/${subjectId}/${chapterId}/${assignedTierStr}/module`;
     try {
       router.push(targetUrl);
     } catch (e) {}

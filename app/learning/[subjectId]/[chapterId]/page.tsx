@@ -189,20 +189,44 @@ export default function ChapterLandingPage() {
           </Link>
         </Card>
       ) : (
-        /* POST-DIAGNOSTIC HEADER */
-        <Card variant="white" className="p-6 flex items-center justify-between gap-4">
+        /* POST-DIAGNOSTIC HEADER / REVISION HUB BANNER */
+        <Card variant="white" className="p-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-2">
               <Badge variant="green">✓ Diagnostic Complete</Badge>
               <Badge variant="purple">Assigned Tier: {assignedTier}</Badge>
+              {isBegCompleted && isIntCompleted && isAdvCompleted && (
+                <Badge variant="yellow">🏆 Chapter Mastered</Badge>
+              )}
             </div>
             <h2 className="text-2xl font-bold color-primary">
-              Adaptive Level Progression
+              {isBegCompleted && isIntCompleted && isAdvCompleted
+                ? '🏆 Chapter Mastered & Revision Hub'
+                : '🚀 Active Learning Progression'}
             </h2>
             <p className="text-sm opacity-80">
-              Your levels unlock dynamically based on your assigned tier and completed evaluations.
+              {isBegCompleted && isIntCompleted && isAdvCompleted
+                ? 'You have completed all difficulty levels! You can freely re-open and review any micro-lesson module below.'
+                : 'Your learning pipeline is active. Continue where you left off or review completed modules.'}
             </p>
           </div>
+
+          {!(isBegCompleted && isIntCompleted && isAdvCompleted) && (
+            <Link
+              href={
+                !isBegCompleted
+                  ? `/learning/${subjectId}/${chapterId}/BEGINNER/module`
+                  : !isIntCompleted
+                  ? `/learning/${subjectId}/${chapterId}/INTERMEDIATE/module`
+                  : `/learning/${subjectId}/${chapterId}/ADVANCED/module`
+              }
+              className="no-underline shrink-0"
+            >
+              <Button variant="secondary" size="md" className="px-6 py-3 font-bold text-base flex items-center gap-2">
+                Continue Learning Pipeline 🚀
+              </Button>
+            </Link>
+          )}
         </Card>
       )}
 

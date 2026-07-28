@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { useUserSession, saveQuizCache, getQuizCache, clearQuizCache } from '@/lib/store';
-import { quizQuestions, QuizQuestion, badgeDefinitions, BadgeDefinition } from '@/lib/mockData';
+import { getQuizQuestions, QuizQuestion, badgeDefinitions, BadgeDefinition } from '@/lib/mockData';
 import { createClient, getCurrentUserId } from '@/lib/supabase/client';
 
 export default function TwoPassQuizPage() {
@@ -29,8 +29,8 @@ export default function TwoPassQuizPage() {
   const chapterId = (params?.chapterId as string) || 'chap_01';
   const levelId = (params?.levelId as string) || (params?.topicId as string) || 'BEGINNER';
 
-  // State Management
-  const [initialPass] = useState<QuizQuestion[]>(quizQuestions);
+  // State Management: Dynamically loaded from Quiz.json
+  const [initialPass] = useState<QuizQuestion[]>(() => getQuizQuestions(subjectId, chapterId, levelId));
   const [retryPass, setRetryPass] = useState<QuizQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isSecondPass, setIsSecondPass] = useState(false);
@@ -256,6 +256,19 @@ export default function TwoPassQuizPage() {
     window.location.href = targetUrl;
   };
 
+  const handlePauseAndExitQuiz = () => {
+    if (!isQuizFinished) {
+      saveQuizProgress(levelId, retryPass);
+      saveQuizCache(levelId, {
+        retryPass,
+        currentIndex,
+        isSecondPass,
+        isIntermission,
+      });
+    }
+    handleGoToChapter();
+  };
+
   const handleExitOnIntermission = () => {
     saveQuizProgress(levelId, retryPass);
     saveQuizCache(levelId, {
@@ -351,10 +364,10 @@ export default function TwoPassQuizPage() {
           <Button
             variant="white"
             size="sm"
-            onClick={handleGoToChapter}
-            className="cursor-pointer"
+            onClick={handlePauseAndExitQuiz}
+            className="cursor-pointer font-bold"
           >
-            ← Chapter Landing Page
+            👈 Save & Exit to Chapter
           </Button>
           <div>
             <h1 className="text-xl font-bold color-primary">
@@ -548,25 +561,39 @@ export default function TwoPassQuizPage() {
             </div>
           )}
 
-          <div className="flex flex-col sm:flex-row gap-4 w-full justify-center max-w-md pt-2">
-            <Button
-              variant="secondary"
-              size="lg"
-              className="w-full flex justify-center text-lg cursor-pointer"
-              onClick={handleGoToChapter}
-            >
-              Return to Chapter 👈
-            </Button>
-            <Link href="/learning/dashboard" className="no-underline w-full">
-              <Button
-                variant="white"
-                size="lg"
-                className="w-full flex justify-center text-lg cursor-pointer"
-              >
-                Go to Dashboard 🚀
-              </Button>
-            </Link>
-          </div>
+          {(() => {
+            const levelsSeq = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED'];
+            const currentLevelIdx = levelsSeq.indexOf(levelId.toUpperCase());
+            const nextLevelId = currentLevelIdx !== -1 && currentLevelIdx < levelsSeq.length - 1 ? levelsSeq[currentLevelIdx + 1] : null;
+
+            return (
+              <div className="flex flex-col sm:flex-row gap-4 w-full justify-center max-w-md pt-2">
+                {nextLevelId ? (
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    className="w-full flex justify-center text-lg cursor-pointer font-bold"
+                    onClick={() => {
+                      const nextUrl = `/learning/${subjectId}/${chapterId}/${nextLevelId}/module`;
+                      try { router.push(nextUrl); } catch (e) {}
+                      window.location.href = nextUrl;
+                    }}
+                  >
+                    Proceed to {nextLevelId} Lesson 🚀
+                  </Button>
+                ) : (
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    className="w-full flex justify-center text-lg cursor-pointer font-bold"
+                    onClick={handleGoToChapter}
+                  >
+                    Complete Chapter & View Summary 🏆
+                  </Button>
+                )}
+              </div>
+            );
+          })()}
         </Card>
       )}
     </main>

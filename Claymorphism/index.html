@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClayAcademy - Playful Claymorphic Learning</title>
+  <meta name="description" content="A gorgeous, colorful claymorphic template for kids learning websites. Features rich 3D-like clay aesthetics, interactive mini-games, and a full component style guide.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ==========================================
+       HEADER & NAVIGATION
+       ========================================== -->
+  <header>
+    <div class="header-container">
+      <a href="#" class="logo-link" id="logo-btn">
+        <div class="logo-text">
+          <span>C</span><span>l</span><span>a</span><span>y</span><span>A</span><span>c</span><span>a</span><span>d</span><span>e</span><span>m</span><span>y</span>
+        </div>
+      </a>
+      <nav>
+        <button class="clay-btn clay-btn-sm mobile-menu-toggle" id="menu-toggle" aria-label="Toggle Menu">☰</button>
+        <ul class="nav-links">
+          <li class="nav-item active" data-target="landing-panel"><a href="#home">Home</a></li>
+          <li class="nav-item" data-target="landing-panel" data-scroll="courses-section"><a href="#courses">Courses</a></li>
+          <li class="nav-item" data-target="landing-panel" data-scroll="game-section"><a href="#play">Play Game</a></li>
+          <li class="nav-item" data-target="landing-panel" data-scroll="pricing-section"><a href="#parents">Parents</a></li>
+          <li class="nav-item" data-target="styleguide-panel" id="nav-styleguide"><a href="#styleguide">✨ Style Guide</a></li>
+          <li class="nav-item mobile-only-nav" id="nav-login-mobile"><a href="#login">Sign In</a></li>
+        </ul>
+      </nav>
+      <div class="header-actions">
+        <button class="sound-btn" id="sound-toggle" title="Toggle Sound Effects">🔊</button>
+        <div class="clay-badge clay-badge-yellow" id="stars-counter">
+          ⭐ <span id="stars-count">3</span>
+        </div>
+        <button class="clay-btn clay-btn-sm header-login-btn" id="btn-login">Sign In</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- ==========================================
+         LANDING PANEL: KIDS LEARNING WEBSITE
+         ========================================== -->
+    <div id="landing-panel" class="view-panel active">
+      
+      <!-- HERO SECTION -->
+      <section class="container hero-section" id="hero-section">
+        <div class="hero-content">
+          <div class="clay-badge clay-badge-blue" style="margin-bottom: 1.5rem; font-weight: 700;">
+            🚀 Learning Made Fun!
+          </div>
+          <h1>Explore a World of Bubbles & Shapes!</h1>
+          <p>ClayAcademy is a colorful playground where kids learn Math, Science, and English through interactive, soft-clay games and friendly lessons.</p>
+          <div class="hero-actions">
+            <button class="clay-btn clay-btn-lg clay-btn-secondary" id="btn-hero-start">Start Playing!</button>
+            <button class="clay-btn clay-btn-lg clay-btn-white" id="btn-hero-tour">Take a Tour</button>
+          </div>
+        </div>
+        
+        <div class="hero-visual">
+          <div class="clay-illustration">
+            <div class="clay-illustration-inner">🎨</div>
+          </div>
+          <!-- Floating badges -->
+          <div class="clay-badge fb-1 floater-badge">
+            🚀 <span>Science</span>
+          </div>
+          <div class="clay-badge clay-badge-yellow fb-2 floater-badge">
+            📐 <span>Math</span>
+          </div>
+          <div class="clay-badge clay-badge-blue fb-3 floater-badge">
+            📚 <span>English</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- FEATURES SECTION -->
+      <section class="container features-section" id="features-section">
+        <div class="section-header text-center">
+          <h2>Why Kids Love ClayAcademy</h2>
+          <p>We blend squishy Claymorphic aesthetics with smart pedagogy to make learning feel like playing with soft dough.</p>
+        </div>
+        <div class="features-grid">
+          <div class="clay-card feature-card">
+            <div class="feature-icon-wrapper" style="background-color: rgba(77, 171, 247, 0.15); color: var(--clay-blue);">🧩</div>
+            <h3>Active Play</h3>
+            <p>Every lesson features interactive mini-games and puzzles designed for growing minds.</p>
+          </div>
+          <div class="clay-card feature-card">
+            <div class="feature-icon-wrapper" style="background-color: rgba(81, 207, 102, 0.15); color: var(--clay-green);">🏆</div>
+            <h3>Star Rewards</h3>
+            <p>Kids earn shiny gold stars and friendly achievement badges for completing tasks.</p>
+          </div>
+          <div class="clay-card feature-card">
+            <div class="feature-icon-wrapper" style="background-color: rgba(218, 119, 242, 0.15); color: var(--clay-purple);">🛡️</div>
+            <h3>100% Kid Safe</h3>
+            <p>Strictly zero ads, external tracking, or open chat rooms. Fully controlled by parents.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- COURSE EXPLORER -->
+      <section class="container courses-section" id="courses-section">
+        <div class="section-header text-center">
+          <h2>Pick Your Adventure!</h2>
+          <p>Select a topic to start your colorful journey. Customized lessons for ages 4-10.</p>
+        </div>
+        
+        <div class="courses-filter">
+          <button class="clay-btn clay-btn-sm course-filter-btn" data-category="all">All Topics</button>
+          <button class="clay-btn clay-btn-sm clay-btn-white course-filter-btn" data-category="math">📐 Math</button>
+          <button class="clay-btn clay-btn-sm clay-btn-white course-filter-btn" data-category="science">🧪 Science</button>
+          <button class="clay-btn clay-btn-sm clay-btn-white course-filter-btn" data-category="english">📝 English</button>
+          <button class="clay-btn clay-btn-sm clay-btn-white course-filter-btn" data-category="art">🎨 Creative</button>
+        </div>
+
+        <div class="courses-grid">
+          <!-- Math Card -->
+          <div class="clay-card clay-card-interactive course-card" data-subject="math">
+            <div>
+              <div class="clay-badge clay-badge-yellow course-badge">Numbers</div>
+              <h3>Addition Island</h3>
+              <p>Join Captain Count on a quest across Addition Island. Perfect for beginners learning basic sums!</p>
+            </div>
+            <div class="course-meta">
+              <span class="course-stars">⭐ 4.9</span>
+              <button class="clay-btn clay-btn-sm clay-btn-warning">Play</button>
+            </div>
+          </div>
+          
+          <!-- Science Card -->
+          <div class="clay-card clay-card-interactive course-card" data-subject="science">
+            <div>
+              <div class="clay-badge clay-badge-blue course-badge">Nature</div>
+              <h3>Space Explorer</h3>
+              <p>Blast off into the solar system! Discover planets, stars, and gravity in this bubble-physics lab.</p>
+            </div>
+            <div class="course-meta">
+              <span class="course-stars">⭐ 4.8</span>
+              <button class="clay-btn clay-btn-sm">Blast Off</button>
+            </div>
+          </div>
+
+          <!-- Art Card -->
+          <div class="clay-card clay-card-interactive course-card" data-subject="art">
+            <div>
+              <div class="clay-badge course-badge" style="background-color: var(--clay-purple); color: white;">Creative</div>
+              <h3>Clay Paintbox</h3>
+              <p>Mix virtual clay colors, paint funny creatures, and learn primary color theory in our messy-free digital easel.</p>
+            </div>
+            <div class="course-meta">
+              <span class="course-stars">⭐ 5.0</span>
+              <button class="clay-btn clay-btn-sm clay-btn-purple">Create</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- INTERACTIVE GAME SECTION -->
+      <section class="container game-section" id="game-section">
+        <div class="game-layout">
+          <div>
+            <h2>Try a Mini-Game Right Now!</h2>
+            <p style="margin-bottom: 2rem;">Show your child how responsive and fun our clay buttons are. Solve the math problems to earn gold stars!</p>
+            <div class="clay-card">
+              <h4 style="margin-bottom: 1rem;">Game Progress Tracker</h4>
+              <div class="clay-progress-track">
+                <div class="clay-progress-bar" id="game-progress" style="width: 33%;"></div>
+              </div>
+              <p style="font-size: 0.95rem;">Answer 3 correct equations to win a giant badge!</p>
+            </div>
+          </div>
+          
+          <div class="game-console">
+            <h3 class="game-title">⚡ Math Pop!</h3>
+            <div class="game-screen">
+              <div class="game-equation" id="game-equation">5 + 3</div>
+              <div id="game-status" style="font-size: 1.2rem; font-weight: 700; color: var(--clay-green);">Choose the right bubble!</div>
+            </div>
+            <div class="game-options">
+              <button class="clay-btn clay-btn-lg clay-btn-white game-opt" data-val="6">6</button>
+              <button class="clay-btn clay-btn-lg clay-btn-white game-opt" data-val="8">8</button>
+              <button class="clay-btn clay-btn-lg clay-btn-white game-opt" data-val="9">9</button>
+            </div>
+            <div class="clay-badge clay-badge-yellow game-score-badge">
+              Score: <span id="game-score" style="margin-left: 0.25rem;">0</span>/3
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PARENTS & PRICING -->
+      <section class="container pricing-section" id="pricing-section">
+        <div class="section-header text-center">
+          <h2>Parents Portal & Plans</h2>
+          <p>Create a profile, adjust age difficulty filters, and unlock unlimited learning with our premium memberships.</p>
+        </div>
+        
+        <div class="pricing-grid">
+          <!-- Free Plan -->
+          <div class="clay-card pricing-card">
+            <h3>Explorer</h3>
+            <p>Kickstart your journey</p>
+            <div class="pricing-price">$0<span>/month</span></div>
+            <ul class="pricing-features">
+              <li>3 mini-games per day</li>
+              <li>Basic math and vocabulary</li>
+              <li>Single device access</li>
+              <li>Parent progress report (weekly)</li>
+            </ul>
+            <button class="clay-btn clay-btn-white" style="width: 100%;" id="btn-pricing-free">Current Plan</button>
+          </div>
+          
+          <!-- Premium Plan -->
+          <div class="clay-card pricing-card popular">
+            <div class="popular-tag">BEST VALUE</div>
+            <h3>Super Scholar</h3>
+            <p>Unlimited squishy learning</p>
+            <div class="pricing-price">$9.99<span>/month</span></div>
+            <ul class="pricing-features">
+              <li>Unlimited access to all 50+ games</li>
+              <li>Science labs & creative studio</li>
+              <li>Up to 4 children profiles</li>
+              <li>Instant parent progress alerts</li>
+              <li>Offline worksheets download</li>
+            </ul>
+            <button class="clay-btn" style="width: 100%;" id="btn-pricing-premium">Unlock Premium</button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ==========================================
+         DEVELOPER PANEL: COMPONENT STYLE GUIDE
+         ========================================== -->
+    <div id="styleguide-panel" class="view-panel">
+      <div class="container">
+        
+        <div class="styleguide-header">
+          <h1>Claymorphism Component Library</h1>
+          <p style="margin-top: 0.5rem; font-size: 1.2rem;">A premium set of colorful UI elements styled with double inner-shadows for a squishy 3D look. Perfect for kids' learning websites or fun educational tools.</p>
+          <button class="clay-btn clay-btn-white" style="margin-top: 1.5rem;" id="btn-back-home">⬅ Back to Homepage</button>
+        </div>
+
+        <!-- STYLE GUIDE NAVIGATION -->
+        <div class="styleguide-nav">
+          <button class="clay-btn clay-btn-sm style-nav-btn" data-sec="sec-buttons">Buttons</button>
+          <button class="clay-btn clay-btn-sm clay-btn-white style-nav-btn" data-sec="sec-cards">Cards</button>
+          <button class="clay-btn clay-btn-sm clay-btn-white style-nav-btn" data-sec="sec-inputs">Form Inputs</button>
+          <button class="clay-btn clay-btn-sm clay-btn-white style-nav-btn" data-sec="sec-controls">Controls & Switches</button>
+          <button class="clay-btn clay-btn-sm clay-btn-white style-nav-btn" data-sec="sec-feedback">Progress & Badges</button>
+        </div>
+
+        <!-- BUTTONS SECTION -->
+        <section class="styleguide-section" id="sec-buttons">
+          <h2>1. Clay Buttons</h2>
+          <p style="margin-bottom: 2rem;">Buttons have subtle scale reductions when clicked (`active` state) and soft translation animations on hover to invite interaction.</p>
+          
+          <div class="component-grid">
+            <!-- Primary Blue Button -->
+            <div class="component-item">
+              <h4>Primary Blue</h4>
+              <div class="component-display">
+                <button class="clay-btn">Tap Me!</button>
+              </div>
+              <div class="code-box-wrapper">
+                <div class="code-box-header">
+                  <span class="code-lang">HTML</span>
+                  <button class="copy-btn" data-target="code-btn-blue">Copy</button>
+                </div>
+                <div class="code-box"><pre><code id="code-btn-blue">&lt;button class=&quot;clay-btn&quot;&gt;Tap Me!&lt;/button&gt;</code></pre></div>
+              </div>
+            </div>
+            
+            <!-- Secondary Green Button -->
+            <div class="component-item">
+              <h4>Secondary Green</h4>
+              <div class="component-display">
+                <button class="clay-btn clay-btn-secondary">Yay Green!</button>
+              </div>
+              <div class="code-box-wrapper">
+                <div class="code-box-header">
+                  <span class="code-lang">HTML</span>
+                  <button class="copy-btn" data-target="code-btn-green">Copy</button>
+                </div>
+                <div class="code-box"><pre><code id="code-btn-green">&lt;button class=&quot;clay-btn clay-btn-secondary&quot;&gt;Yay Green!&lt;/button&gt;</code></pre></div>
+              </div>
+            </div>
+
+            <!-- Warning Yellow Button -->
+            <div class="component-item">
+              <h4>Warning Yellow</h4>
+              <div class="component-display">
+                <button class="clay-btn clay-btn-warning">Ooh Star!</button>
+              </div>
+              <div class="code-box-wrapper">
+                <div class="code-box-header">
+                  <span class="code-lang">HTML</span>
+                  <button class="copy-btn" data-target="code-btn-warning">Copy</button>
+                </div>
+                <div class="code-box"><pre><code id="code-btn-warning">&lt;button class=&quot;clay-btn clay-btn-warning&quot;&gt;Ooh Star!&lt;/button&gt;</code></pre></div>
+              </div>
+            </div>
+
+            <!-- Danger Pink Button -->
+            <div class="component-item">
+              <h4>Danger Pink</h4>
+              <div class="component-display">
+                <button class="clay-btn clay-btn-danger">Oops Pink!</button>
+              </div>
+              <div class="code-box-wrapper">
+                <div class="code-box-header">
+                  <span class="code-lang">HTML</span>
+                  <button class="copy-btn" data-target="code-btn-danger">Copy</button>
+                </div>
+                <div class="code-box"><pre><code id="code-btn-danger">&lt;button class=&quot;clay-btn clay-btn-danger&quot;&gt;Oops Pink!&lt;/button&gt;</code></pre></div>
+              </div>
+            </div>
+
+            <!-- Purple Button -->
+            <div class="component-item">
+              <h4>Creative Purple</h4>
+              <div class="component-display">
+                <button class="clay-btn clay-btn-purple">Magic Art!</button>
+              </div>
+              <div class="code-box-wrapper">
+                <div class="code-box-header">
+                  <span class="code-lang">HTML</span>
+                  <button class="copy-btn" data-target="code-btn-purple">Copy</button>
+                </div>
+                <div class="code-box"><pre><code id="code-btn-purple">&lt;button class=&quot;clay-btn clay-btn-purple&quot;&gt;Magic Art!&lt;/button&gt;</code></pre></div>
+              </div>
+            </div>
+
+            <!-- Disabled Button -->
+            <div class="component-item">
+              <h4>Disabled Clay</h4>
+              <div class="component-display">
+                <button class="clay-btn clay-btn-disabled" disabled>Locked</button>
+              </div>
+              <div class="code-box-wrapper">
+                <div class="code-box-header">
+                  <span class="code-lang">HTML</span>
+                  <button class="copy-btn" data-target="code-btn-disabled">Copy</button>
+                </div>
+                <div class="code-box"><pre><code id="code-btn-disabled">&lt;button class=&quot;clay-btn clay-btn-disabled&quot; disabled&gt;Locked&lt;/button&gt;</code></pre></div>
+              </div>
+            </div>
+
+            <!-- Small Button -->
+            <div class="component-item">
+              <h4>Small Button</h4>
+              <div class="component-display">
+                <button class="clay-btn clay-btn-sm">Tiny Bubble</button>
+              </div>
+              <div class="code-box-wrapper">
+                <div class="code-box-header">
+                  <span class="code-lang">HTML</span>
+                  <button class="copy-btn" data-target="code-btn-sm">Copy</button>
+                </div>
+                <div class="code-box"><pre><code id="code-btn-sm">&lt;button class=&quot;clay-btn clay-btn-sm&quot;&gt;Tiny Bubble&lt;/button&gt;</code></pre></div>
+              </div>
+            </div>
+
+            <!-- Large Button -->
+            <div class="component-item">
+              <h4>Large Button</h4>
+              <div class="component-display">
+                <button class="clay-btn clay-btn-lg clay-btn-orange">Big Balloon</button>
+              </div>
+              <div class="code-box-wrapper">
+                <div class="code-box-header">
+                  <span class="code-lang">HTML</span>
+                  <button class="copy-btn" data-target="code-btn-lg">Copy</button>
+                </div>
+                <div class="code-box"><pre><code id="code-btn-lg">&lt;button class=&quot;clay-btn clay-btn-lg clay-btn-orange&quot;&gt;Big Balloon&lt;/button&gt;</code></pre></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- CARDS SECTION -->
+        <section class="styleguide-section" id="sec-cards" style="display: none;">
+          <h2>2. Clay Cards</h2>
+          <p style="margin-bottom: 2rem;">Standard cards have a white background. Colorful variants are useful to draw a child's attention to specific topic zones.</p>
+          
+          <div class="component-grid">
+            <!-- White Card -->
+            <div class="component-item">
+              <h4>Standard White Card</h4>
+              <div class="component-display" style="padding: 1rem;">
+                <div class="clay-card" style="padding: 1.5rem; text-align: center; width: 100%;">
+                  <h3>Hello!</h3>
+                  <p style="font-size: 0.95rem;">I am a standard clay card.</p>
+                </div>
+              </div>
+              <div class="code-box-wrapper">
+                <div class="code-box-header">
+                  <span class="code-lang">HTML</span>
+                  <button class="copy-btn" data-target="code-card-white">Copy</button>
+                </div>
+                <div class="code-box"><pre><code id="code-card-white">&lt;div class=&quot;clay-card&quot;&gt;
+  &lt;h3&gt;Hello!&lt;/h3&gt;
+  &lt;p&gt;I am a standard clay card.&lt;/p&gt;
+&lt;/div&gt;</code></pre></div>
+              </div>
+            </div>
+
+            <!-- Blue Card -->
+            <div class="component-item">
+              <h4>Blue Clay Card</h4>
+              <div class="component-display" style="padding: 1rem;">
+                <div class="clay-card clay-card-blue" style="padding: 1.5rem; text-align: center; width: 100%;">
+                  <h3>Ocean Blue</h3>
+                  <p style="font-size: 0.95rem;">Cool shadows on color!</p>
+                </div>
+              </div>
+              <div class="code-box-wrapper">
+                <div class="code-box-header">
+                  <span class="code-lang">HTML</span>
+                  <button class="copy-btn" data-target="code-card-blue">Copy</button>
+                </div>
+                <div class="code-box"><pre><code id="code-card-blue">&lt;div class=&quot;clay-card clay-card-blue&quot;&gt;
+  &lt;h3&gt;Ocean Blue&lt;/h3&gt;
+  &lt;p&gt;Cool shadows on color!&lt;/p&gt;
+&lt;/div&gt;</code></pre></div>
+              </div>
+            </div>
+
+            <!-- Green Card -->
+            <div class="component-item">
+              <h4>Green Clay Card</h4>
+              <div class="component-display" style="padding: 1rem;">
+                <div class="clay-card clay-card-green" style="padding: 1.5rem; text-align: center; width: 100%;">
+                  <h3>Meadow Green</h3>
+                  <p style="font-size: 0.95rem;">Friendly layout card.</p>
+                </div>
+              </div>
+              <div class="code-box-wrapper">
+                <div class="code-box-header">
+                  <span class="code-lang">HTML</span>
+                  <button class="copy-btn" data-target="code-card-green">Copy</button>
+                </div>
+                <div class="code-box"><pre><code id="code-card-green">&lt;div class=&quot;clay-card clay-card-green&quot;&gt;
+  &lt;h3&gt;Meadow Green&lt;/h3&gt;
+  &lt;p&gt;Friendly layout card.&lt;/p&gt;
+&lt;/div&gt;</code></pre></div>
+              </div>
+            </div>
+
+            <!-- Interactive Pink Card -->
+            <div class="component-item">
+              <h4>Hover Interactive Card</h4>
+              <div class="component-display" style="padding: 1rem;">
+                <div class="clay-card clay-card-pink clay-card-interactive" style="padding: 1.5rem; text-align: center; width: 100%;">
+                  <h3>Hover Me!</h3>
+                  <p style="font-size: 0.95rem;">Bounces when floated.</p>
+                </div>
+              </div>
+              <div class="code-box-wrapper">
+                <div class="code-box-header">
+                  <span class="code-lang">HTML</span>
+                  <button class="copy-btn" data-target="code-card-interactive">Copy</button>
+                </div>
+                <div class="code-box"><pre><code id="code-card-interactive">&lt;div class=&quot;clay-card clay-card-pink clay-card-interactive&quot;&gt;
+  &lt;h3&gt;Hover Me!&lt;/h3&gt;
+  &lt;p&gt;Bounces when floated.&lt;/p&gt;
+&lt;/div&gt;</code></pre></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- FORM INPUTS SECTION -->
+        <section class="styleguide-section" id="sec-inputs" style="display: none;">
+          <h2>3. Form & Text Inputs</h2>
+          <p style="margin-bottom: 2rem;">Form inputs are built with an inset shadow. On focus, they acquire a soft outline highlight that mimics colored clay borders.</p>
+          
+          <div class="component-grid">
+            <!-- Text Input -->
+            <div class="component-item">
+              <h4>Standard Text Input</h4>
+              <div class="component-display" style="display: block; padding: 1.5rem;">
+                <div class="clay-input-wrapper">
+                  <label class="clay-label" for="std-input">What's your name?</label>
+                  <input type="text" class="clay-input" id="std-input" placeholder="Type name here...">
+                </div>
+              </div>
+              <div class="code-box-wrapper">
+                <div class="code-box-header">
+                  <span class="code-lang">HTML</span>
+                  <button class="copy-btn" data-target="code-input-text">Copy</button>
+                </div>
+                <div class="code-box"><pre><code id="code-input-text">&lt;div class=&quot;clay-input-wrapper&quot;&gt;
+  &lt;label class=&quot;clay-label&quot; for=&quot;std-input&quot;&gt;What's your name?&lt;/label&gt;
+  &lt;input type=&quot;text&quot; class=&quot;clay-input&quot; id=&quot;std-input&quot; placeholder=&quot;Type name here...&quot;&gt;
+&lt;/div&gt;</code></pre></div>
+              </div>
+            </div>
+
+            <!-- Textarea -->
+            <div class="component-item">
+              <h4>Clay Textarea</h4>
+              <div class="component-display" style="display: block; padding: 1.5rem;">
+                <div class="clay-input-wrapper">
+                  <label class="clay-label" for="area-input">Write a funny story!</label>
+                  <textarea class="clay-input clay-textarea" id="area-input" placeholder="Once upon a bubble..."></textarea>
+                </div>
+              </div>
+              <div class="code-box-wrapper">
+                <div class="code-box-header">
+                  <span class="code-lang">HTML</span>
+                  <button class="copy-btn" data-target="code-input-textarea">Copy</button>
+                </div>
+                <div class="code-box"><pre><code id="code-input-textarea">&lt;div class=&quot;clay-input-wrapper&quot;&gt;
+  &lt;label class=&quot;clay-label&quot; for=&quot;area-input&quot;&gt;Write a funny story!&lt;/label&gt;
+  &lt;textarea class=&quot;clay-input clay-textarea&quot; id=&quot;area-input&quot; placeholder=&quot;Once upon...&quot;&gt;&lt;/textarea&gt;
+&lt;/div&gt;</code></pre></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- CONTROLS SECTION -->
+        <section class="styleguide-section" id="sec-controls" style="display: none;">
+          <h2>4. Switches, Checkboxes, and Sliders</h2>
+          <p style="margin-bottom: 2rem;">Small controls styled with clay properties make configurations like volume, difficulty levels, or avatar selections easy and tactile.</p>
+          
+          <div class="component-grid">
+            <!-- Toggle Switch -->
+            <div class="component-item">
+              <h4>Toggle Switch</h4>
+              <div class="component-display">
+                <label class="clay-switch">
+                  <input type="checkbox" class="clay-switch-input" checked>
+                  <span class="clay-switch-track">
+                    <span class="clay-switch-thumb"></span>
+                  </span>
+                  <span style="font-weight: 700;">Sound FX</span>
+                </label>
+              </div>
+              <div class="code-box-wrapper">
+                <div class="code-box-header">
+                  <span class="code-lang">HTML</span>
+                  <button class="copy-btn" data-target="code-ctrl-switch">Copy</button>
+                </div>
+                <div class="code-box"><pre><code id="code-ctrl-switch">&lt;label class=&quot;clay-switch&quot;&gt;
+  &lt;input type=&quot;checkbox&quot; class=&quot;clay-switch-input&quot; checked&gt;
+  &lt;span class=&quot;clay-switch-track&quot;&gt;
+    &lt;span class=&quot;clay-switch-thumb&quot;&gt;&lt;/span&gt;
+  &lt;/span&gt;
+  &lt;span style=&quot;font-weight: 700;&quot;&gt;Sound FX&lt;/span&gt;
+&lt;/label&gt;</code></pre></div>
+              </div>
+            </div>
+
+            <!-- Checkbox -->
+            <div class="component-item">
+              <h4>Tactile Checkbox</h4>
+              <div class="component-display">
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                  <label class="clay-checkbox-label">
+                    <input type="checkbox" class="clay-checkbox-input" checked>
+                    <span class="clay-checkbox-box"></span>
+                    <span>Music Active</span>
+                  </label>
+                  <label class="clay-checkbox-label">
+                    <input type="checkbox" class="clay-checkbox-input">
+                    <span class="clay-checkbox-box"></span>
+                    <span>Haptic Feedback</span>
+                  </label>
+                </div>
+              </div>
+              <div class="code-box-wrapper">
+                <div class="code-box-header">
+                  <span class="code-lang">HTML</span>
+                  <button class="copy-btn" data-target="code-ctrl-checkbox">Copy</button>
+                </div>
+                <div class="code-box"><pre><code id="code-ctrl-checkbox">&lt;label class=&quot;clay-checkbox-label&quot;&gt;
+  &lt;input type=&quot;checkbox&quot; class=&quot;clay-checkbox-input&quot; checked&gt;
+  &lt;span class=&quot;clay-checkbox-box&quot;&gt;&lt;/span&gt;
+  &lt;span&gt;Music Active&lt;/span&gt;
+&lt;/label&gt;</code></pre></div>
+              </div>
+            </div>
+
+            <!-- Radio Button -->
+            <div class="component-item">
+              <h4>Clay Radio Option</h4>
+              <div class="component-display">
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                  <label class="clay-radio-label">
+                    <input type="radio" name="difficulty" class="clay-radio-input" checked>
+                    <span class="clay-radio-box"></span>
+                    <span>Easy Pea-sy</span>
+                  </label>
+                  <label class="clay-radio-label">
+                    <input type="radio" name="difficulty" class="clay-radio-input">
+                    <span class="clay-radio-box"></span>
+                    <span>Super Smart</span>
+                  </label>
+                </div>
+              </div>
+              <div class="code-box-wrapper">
+                <div class="code-box-header">
+                  <span class="code-lang">HTML</span>
+                  <button class="copy-btn" data-target="code-ctrl-radio">Copy</button>
+                </div>
+                <div class="code-box"><pre><code id="code-ctrl-radio">&lt;label class=&quot;clay-radio-label&quot;&gt;
+  &lt;input type=&quot;radio&quot; name=&quot;difficulty&quot; class=&quot;clay-radio-input&quot; checked&gt;
+  &lt;span class=&quot;clay-radio-box&quot;&gt;&lt;/span&gt;
+  &lt;span&gt;Easy Pea-sy&lt;/span&gt;
+&lt;/label&gt;</code></pre></div>
+              </div>
+            </div>
+
+            <!-- Slider Range -->
+            <div class="component-item">
+              <h4>Tactile Slider Thumb</h4>
+              <div class="component-display" style="display: block; padding: 1.5rem 2.5rem;">
+                <label class="clay-label" for="guide-slider">Volume Control</label>
+                <div class="clay-slider-wrapper">
+                  <input type="range" class="clay-slider" id="guide-slider" min="0" max="100" value="70">
+                </div>
+              </div>
+              <div class="code-box-wrapper">
+                <div class="code-box-header">
+                  <span class="code-lang">HTML</span>
+                  <button class="copy-btn" data-target="code-ctrl-slider">Copy</button>
+                </div>
+                <div class="code-box"><pre><code id="code-ctrl-slider">&lt;div class=&quot;clay-slider-wrapper&quot;&gt;
+  &lt;input type=&quot;range&quot; class=&quot;clay-slider&quot; min=&quot;0&quot; max=&quot;100&quot; value=&quot;70&quot;&gt;
+&lt;/div&gt;</code></pre></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- FEEDBACK & BADGES SECTION -->
+        <section class="styleguide-section" id="sec-feedback" style="display: none;">
+          <h2>5. Progress & Status Indicators</h2>
+          <p style="margin-bottom: 2rem;">Chunky loading bars and rounded floating badges look satisfying and rewarding for young pupils.</p>
+          
+          <div class="component-grid">
+            <!-- Progress Bar -->
+            <div class="component-item" style="grid-column: span 2;">
+              <h4>Chunky Progress Bar</h4>
+              <div class="component-display" style="display: block; padding: 2.5rem;">
+                <label class="clay-label">Completing Lesson...</label>
+                <div class="clay-progress-track">
+                  <div class="clay-progress-bar" style="width: 65%;"></div>
+                </div>
+              </div>
+              <div class="code-box-wrapper">
+                <div class="code-box-header">
+                  <span class="code-lang">HTML</span>
+                  <button class="copy-btn" data-target="code-fb-progress">Copy</button>
+                </div>
+                <div class="code-box"><pre><code id="code-fb-progress">&lt;div class=&quot;clay-progress-track&quot;&gt;
+  &lt;div class=&quot;clay-progress-bar&quot; style=&quot;width: 65%;&quot;&gt;&lt;/div&gt;
+&lt;/div&gt;</code></pre></div>
+              </div>
+            </div>
+
+            <!-- Star Badge -->
+            <div class="component-item">
+              <h4>Star / Score Badge</h4>
+              <div class="component-display">
+                <div class="clay-badge clay-badge-yellow">
+                  ⭐ <span style="font-weight: 700;">Level 5</span>
+                </div>
+              </div>
+              <div class="code-box-wrapper">
+                <div class="code-box-header">
+                  <span class="code-lang">HTML</span>
+                  <button class="copy-btn" data-target="code-fb-star">Copy</button>
+                </div>
+                <div class="code-box"><pre><code id="code-fb-star">&lt;div class=&quot;clay-badge clay-badge-yellow&quot;&gt;
+  ⭐ &lt;span style=&quot;font-weight: 700;&quot;&gt;Level 5&lt;/span&gt;
+&lt;/div&gt;</code></pre></div>
+              </div>
+            </div>
+
+            <!-- Trigger Modal Button -->
+            <div class="component-item">
+              <h4>Congratulations Modal trigger</h4>
+              <div class="component-display">
+                <button class="clay-btn clay-btn-secondary" id="btn-trigger-modal">Pop Open Modal</button>
+              </div>
+              <div class="code-box-wrapper">
+                <div class="code-box-header">
+                  <span class="code-lang">HTML / Trigger</span>
+                  <button class="copy-btn" data-target="code-fb-modal">Copy</button>
+                </div>
+                <div class="code-box"><pre><code id="code-fb-modal">&lt;!-- Modal Overlay and Dialog --&gt;
+&lt;div class=&quot;modal-overlay&quot; id=&quot;demo-modal&quot;&gt;
+  &lt;div class=&quot;clay-modal&quot;&gt;
+    &lt;h2&gt;Congratulations!&lt;/h2&gt;
+    &lt;p&gt;You have unlocked a badge!&lt;/p&gt;
+    &lt;button class=&quot;clay-btn&quot;&gt;Awesome!&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- ==========================================
+       MODAL OVERLAY (CONGRATS / POPUPS)
+       ========================================== -->
+  <div class="modal-overlay" id="main-modal">
+    <div class="clay-modal">
+      <div style="font-size: 4.5rem; margin-bottom: 1.5rem; animation: floating 2s ease-in-out infinite alternate;">🏆</div>
+      <h2 style="font-size: 2.2rem; margin-bottom: 1rem; color: var(--clay-blue);" id="modal-title">Super Job!</h2>
+      <p style="margin-bottom: 2rem; font-size: 1.15rem;" id="modal-text">You got 3 answers correct in Math Pop! Here is your Super Math Badge!</p>
+      <div style="display: flex; justify-content: center; gap: 1rem;">
+        <button class="clay-btn clay-btn-secondary" id="modal-close-btn" style="padding-left: 3rem; padding-right: 3rem;">Awesome!</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       FOOTER
+       ========================================== -->
+  <footer>
+    <div class="footer-container">
+      <div class="footer-about">
+        <h3>ClayAcademy</h3>
+        <p>A fun, tactile kids learning website built using state of the art double-inset Claymorphic elements. Easy for children to click, safe for parents to trust.</p>
+        <div class="footer-socials">
+          <a href="#" class="clay-card-interactive" style="border: 1px solid rgba(0,0,0,0.05); box-shadow: inset 2px 2px 4px rgba(255,255,255,1), inset -2px -2px 4px rgba(0,0,0,0.08), 2px 3px 6px rgba(0,0,0,0.05);">🔵</a>
+          <a href="#" class="clay-card-interactive" style="border: 1px solid rgba(0,0,0,0.05); box-shadow: inset 2px 2px 4px rgba(255,255,255,1), inset -2px -2px 4px rgba(0,0,0,0.08), 2px 3px 6px rgba(0,0,0,0.05);">🔴</a>
+          <a href="#" class="clay-card-interactive" style="border: 1px solid rgba(0,0,0,0.05); box-shadow: inset 2px 2px 4px rgba(255,255,255,1), inset -2px -2px 4px rgba(0,0,0,0.08), 2px 3px 6px rgba(0,0,0,0.05);">🟣</a>
+        </div>
+      </div>
+      
+      <div class="footer-links">
+        <h4>Adventures</h4>
+        <ul>
+          <li><a href="#home">Addition Island</a></li>
+          <li><a href="#home">Space Explorer</a></li>
+          <li><a href="#home">Clay Paintbox</a></li>
+          <li><a href="#home">Spelling Safari</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-links">
+        <h4>Parents</h4>
+        <ul>
+          <li><a href="#parents">Pricing Plans</a></li>
+          <li><a href="#parents">Age Filters</a></li>
+          <li><a href="#parents">Dashboard Reports</a></li>
+          <li><a href="#parents">FAQ Help</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-links">
+        <h4>Developers</h4>
+        <ul>
+          <li><a href="#styleguide" id="footer-styleguide-link">✨ UI Library</a></li>
+          <li><a href="https://github.com" target="_blank">GitHub Repo</a></li>
+          <li><a href="style.css" target="_blank">style.css file</a></li>
+          <li><a href="app.js" target="_blank">app.js file</a></li>
+        </ul>
+      </div>
+    </div>
+    
+    <div class="footer-bottom">
+      <p>&copy; 2026 ClayAcademy. All rights reserved.</p>
+      <p>Made with 💖 using <a href="#styleguide" id="footer-style-ref">Claymorphism CSS</a></p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

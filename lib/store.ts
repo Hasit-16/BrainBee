@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { QuizQuestion } from '@/lib/mockData';
+import { createClient } from '@/lib/supabase/client';
 
-export type Role = 'STUDENT' | 'TEACHER' | 'ADMIN';
+export type Role = 'STUDENT' | 'TEACHER';
 export type Tier = 'UNASSIGNED' | 'FOUNDATION' | 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
 export type ChapterTierState = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'COMPLETED';
 
@@ -19,6 +20,7 @@ export interface UserSession {
   name: string;
   role: Role;
   instituteId: string;
+  studentId?: string;
   tier?: Tier;
   topicDiagnostics?: Record<string, { tier: Tier; completedAt: string }>;
   completedQuizTopics?: Record<string, boolean>;
@@ -73,7 +75,12 @@ export function useUserSession() {
     try {
       const stored = localStorage.getItem(SESSION_KEY);
       if (stored) {
-        setSession(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        setSession(parsed);
+        if (typeof document !== 'undefined' && parsed.role) {
+          document.cookie = `brainbee_role=${parsed.role}; path=/; max-age=86400`;
+          document.cookie = `brainbee_session=true; path=/; max-age=86400`;
+        }
       }
     } catch (e) {
       console.error('Failed to parse user session from localStorage', e);
@@ -82,20 +89,22 @@ export function useUserSession() {
     }
   }, []);
 
-  const login = (role: Role, name?: string) => {
+  const login = (
+    role: Role,
+    credentials?: { instituteId?: string; studentId?: string; name?: string }
+  ) => {
     const defaultName =
-      name ||
+      credentials?.name ||
       (role === 'STUDENT'
-        ? 'Alex Student'
-        : role === 'TEACHER'
-        ? 'Ms. Clara Teacher'
-        : 'Admin User');
+        ? credentials?.studentId ? `Student (${credentials.studentId})` : 'Alex Student'
+        : 'Ms. Clara Teacher');
 
     const newSession: UserSession = {
-      id: `usr_${Date.now()}`,
+      id: credentials?.studentId ? `stu_${credentials.studentId}` : `usr_${Date.now()}`,
       name: defaultName,
       role: role,
-      instituteId: 'inst_01',
+      instituteId: credentials?.instituteId || 'INST-001',
+      studentId: credentials?.studentId || (role === 'STUDENT' ? 'STU-101' : undefined),
       tier: 'UNASSIGNED',
       topicDiagnostics: {},
       completedQuizTopics: {},
@@ -105,6 +114,10 @@ export function useUserSession() {
 
     try {
       localStorage.setItem(SESSION_KEY, JSON.stringify(newSession));
+      if (typeof document !== 'undefined') {
+        document.cookie = `brainbee_role=${role}; path=/; max-age=86400`;
+        document.cookie = `brainbee_session=true; path=/; max-age=86400`;
+      }
       setSession(newSession);
     } catch (e) {
       console.error('Failed to save session to localStorage', e);
@@ -112,9 +125,20 @@ export function useUserSession() {
     return newSession;
   };
 
-  const logout = () => {
+  const logout = async () => {
     try {
       localStorage.removeItem(SESSION_KEY);
+      if (typeof document !== 'undefined') {
+        document.cookie = 'brainbee_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        document.cookie = 'brainbee_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        document.cookie = 'brainbee_user_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      }
+      try {
+        const supabase = createClient();
+        await supabase.auth.signOut();
+      } catch (err) {
+        console.error('Failed to sign out from Supabase Auth:', err);
+      }
       setSession(null);
     } catch (e) {
       console.error('Failed to clear session from localStorage', e);

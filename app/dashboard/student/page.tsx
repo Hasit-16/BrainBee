@@ -3,10 +3,6 @@
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
-import { ProgressBar } from '@/components/ui/ProgressBar';
 import { useUserSession } from '@/lib/store';
 import { mockData } from '@/lib/mockData';
 
@@ -24,122 +20,192 @@ export default function StudentDashboardHub() {
     return null;
   }
 
-  const handleLogout = () => {
-    logout();
-    router.push('/');
+  const handleLogout = async () => {
+    await logout();
+    router.push('/login');
   };
 
   const { student, subjects } = mockData;
 
   return (
-    <main className="min-h-screen p-6 max-w-6xl mx-auto flex flex-col gap-8">
-      {/* Header Bar */}
-      <header className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-3xl bg-white/70 backdrop-blur border border-white/80">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-blue-500 text-white flex items-center justify-center font-bold text-xl">
+    <main className="min-h-screen bg-[#f4f7fb] text-slate-800 p-6 md:p-10 max-w-7xl mx-auto flex flex-col gap-10 font-sans">
+      {/* STEP 1: HEADER & STATS (Pills & White Clay Container) */}
+      <header className="bg-white rounded-[2.5rem] p-6 md:p-8 shadow-xl shadow-slate-200/60 border border-white/90 flex flex-wrap items-center justify-between gap-6">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-full bg-blue-500/10 border-2 border-blue-500/20 text-blue-600 flex items-center justify-center font-extrabold text-2xl shadow-inner">
             👤
           </div>
           <div>
-            <h1 className="text-2xl font-bold color-primary">
+            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-800">
               Welcome back, {session?.name || student.name}!
             </h1>
-            <p className="text-sm font-medium">
-              Grade 5 • Tier: <span className="font-bold">{tier || student.tier}</span>
+            <p className="text-sm font-semibold text-slate-500 mt-0.5">
+              Grade 5 • Current Tier: <span className="text-blue-600 font-bold uppercase">{tier || student.tier}</span>
             </p>
           </div>
         </div>
 
+        {/* Action Buttons as Puffy, Pill-Shaped Buttons */}
         <div className="flex items-center gap-3 flex-wrap">
-          <Button variant="warning" size="md" className="flex items-center gap-2">
+          <button className="rounded-full px-5 py-2.5 bg-amber-100 hover:bg-amber-200 text-amber-800 font-bold text-sm shadow-md shadow-amber-200/50 hover:translate-y-0.5 transition-all flex items-center gap-2 cursor-pointer border border-amber-200/60">
             🔍 Doubt Scan
-          </Button>
-          <Badge variant="yellow">⭐ {student.xp} XP</Badge>
-          <Button variant="danger" size="sm" onClick={handleLogout}>
-            Logout
-          </Button>
+          </button>
+          
+          <div className="rounded-full px-5 py-2.5 bg-amber-400 text-amber-950 font-extrabold text-sm shadow-md shadow-amber-400/40 flex items-center gap-1.5 border border-amber-300">
+            ⭐ {student.xp} XP
+          </div>
+
+          <button
+            onClick={handleLogout}
+            className="rounded-full px-5 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-sm shadow-sm hover:translate-y-0.5 transition-all cursor-pointer border border-rose-200/60"
+          >
+            Logout 🚪
+          </button>
         </div>
       </header>
 
-      {/* Section 1: Subjects Cards Row/Grid */}
-      <section className="flex flex-col gap-4">
+      {/* STEP 2: SUBJECT CARDS (Grid Layout - Pure White Clay Cards with Accent Buttons) */}
+      <section className="flex flex-col gap-5">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold color-primary">Explore Subjects</h2>
-          <Badge variant="blue">Select to Start Learning</Badge>
+          <div>
+            <h2 className="text-2xl font-extrabold tracking-tight text-slate-800">
+              Pick Your Adventure!
+            </h2>
+            <p className="text-xs font-semibold text-slate-500 mt-1">Select a subject to start your micro-learning journey</p>
+          </div>
+          <span className="rounded-full px-4 py-1.5 bg-blue-50 text-blue-600 font-bold text-xs border border-blue-100">
+            Select to Start Learning
+          </span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {subjects.map((sub) => (
-            <Link key={sub.subject_id} href={`/learning/${sub.subject_id}`} className="no-underline">
-              <Card variant={sub.color} interactive className="h-full flex flex-col justify-between p-6">
+          {subjects.map((sub, idx) => {
+            const colorAccents = [
+              { bgIcon: 'bg-blue-50 text-blue-600', btn: 'bg-blue-500 hover:bg-blue-600 shadow-blue-500/30' },
+              { bgIcon: 'bg-emerald-50 text-emerald-600', btn: 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/30' },
+              { bgIcon: 'bg-purple-50 text-purple-600', btn: 'bg-purple-500 hover:bg-purple-600 shadow-purple-500/30' },
+            ];
+            const accent = colorAccents[idx % colorAccents.length];
+
+            return (
+              <div
+                key={sub.subject_id}
+                className="bg-white rounded-[2rem] p-6 shadow-xl shadow-slate-200/60 border border-white/90 flex flex-col justify-between transition-all hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-slate-300/60"
+              >
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <span className="text-4xl">{sub.icon}</span>
-                    <Badge variant="yellow">{sub.standard}</Badge>
+                    <span className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shadow-inner ${accent.bgIcon}`}>
+                      {sub.icon}
+                    </span>
+                    <span className="rounded-full px-3 py-1 text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200/60">
+                      {sub.standard}
+                    </span>
                   </div>
-                  <h3 className="text-2xl font-bold mb-2">{sub.subject_name}</h3>
-                  <p className="text-sm opacity-90 mb-4">
-                    {sub.chapters.length} Chapters Available
+
+                  <h3 className="text-2xl font-extrabold text-slate-800 mb-1">{sub.subject_name}</h3>
+                  <p className="text-xs font-semibold text-slate-500 mb-4">
+                    {sub.chapters.length} Interactive Chapters
                   </p>
                 </div>
-                <div className="pt-2">
-                  <ProgressBar progressPercentage={sub.progress} />
-                  <div className="mt-3 flex justify-end">
-                    <span className="font-bold text-sm underline">Enter Subject →</span>
+
+                {/* STEP 3: Tactile Progress Bar */}
+                <div className="pt-2 flex flex-col gap-3">
+                  <div>
+                    <div className="flex justify-between items-center text-xs font-bold text-slate-500 mb-1.5">
+                      <span>Subject Progress</span>
+                      <span className="text-slate-800 font-extrabold">{sub.progress}%</span>
+                    </div>
+                    <div className="bg-slate-100 shadow-inner rounded-full h-3.5 p-0.5 overflow-hidden border border-slate-200/40">
+                      <div
+                        className="bg-gradient-to-r from-blue-400 to-blue-500 rounded-full h-full transition-all duration-500"
+                        style={{ width: `${sub.progress}%` }}
+                      />
+                    </div>
                   </div>
+
+                  {/* Soft Pill-Shaped Start Button */}
+                  <Link href={`/learning/${sub.subject_id}`} className="no-underline mt-2">
+                    <button
+                      className={`w-full rounded-full py-3 px-6 text-white font-extrabold text-sm shadow-lg ${accent.btn} hover:translate-y-0.5 transition-all flex items-center justify-center gap-2 cursor-pointer`}
+                    >
+                      Start Learning 🚀
+                    </button>
+                  </Link>
                 </div>
-              </Card>
-            </Link>
-          ))}
+              </div>
+            );
+          })}
         </div>
       </section>
 
-      {/* Section 2: Progress Bars Panel */}
-      <section className="flex flex-col gap-4">
-        <h2 className="text-2xl font-bold color-primary">Learning Progress</h2>
-        <Card variant="white" className="flex flex-col gap-6 p-6">
+      {/* STEP 3: PROGRESS BARS (Tactile White Clay Panel) */}
+      <section className="flex flex-col gap-5">
+        <h2 className="text-2xl font-extrabold tracking-tight text-slate-800">
+          Learning Progress
+        </h2>
+
+        <div className="bg-white rounded-[2rem] p-6 md:p-8 shadow-xl shadow-slate-200/60 border border-white/90 flex flex-col gap-6">
           <div>
             <div className="flex justify-between items-center mb-2">
-              <span className="font-bold text-base">Overall Platform Progress</span>
-              <span className="font-bold text-sm color-primary">{student.overallProgress}%</span>
+              <span className="font-extrabold text-base text-slate-800">Overall Platform Progress</span>
+              <span className="font-extrabold text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-full">{student.overallProgress}%</span>
             </div>
-            <ProgressBar progressPercentage={student.overallProgress} />
+            {/* Pressed Inset Track */}
+            <div className="bg-slate-100 shadow-inner rounded-full h-4 p-0.5 overflow-hidden border border-slate-200/50">
+              <div
+                className="bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 rounded-full h-full transition-all duration-500 shadow-sm"
+                style={{ width: `${student.overallProgress}%` }}
+              />
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-100">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 border-t border-slate-100">
             {subjects.map((sub) => (
-              <div key={sub.subject_id} className="flex flex-col gap-2 p-3 rounded-2xl bg-gray-50">
-                <div className="flex items-center justify-between text-sm font-bold">
+              <div key={sub.subject_id} className="flex flex-col gap-2 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                <div className="flex items-center justify-between text-xs font-bold text-slate-700">
                   <span>{sub.icon} {sub.subject_name}</span>
-                  <span>{sub.progress}%</span>
+                  <span className="text-blue-600">{sub.progress}%</span>
                 </div>
-                <ProgressBar progressPercentage={sub.progress} />
+                <div className="bg-slate-200/60 shadow-inner rounded-full h-3 p-0.5 overflow-hidden">
+                  <div
+                    className="bg-blue-500 rounded-full h-full"
+                    style={{ width: `${sub.progress}%` }}
+                  />
+                </div>
               </div>
             ))}
           </div>
-        </Card>
+        </div>
       </section>
 
-      {/* Section 3: Diagnostic Report Summary */}
-      <section className="flex flex-col gap-4">
-        <h2 className="text-2xl font-bold color-primary">Diagnostic Report Summary</h2>
-        <Card variant="white" className="p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="flex items-start gap-4">
-            <div className="text-4xl">📊</div>
+      {/* STEP 4: DIAGNOSTIC CTA (Dedicated White Clay Card & Vibrant Green Focal Button) */}
+      <section className="flex flex-col gap-5">
+        <h2 className="text-2xl font-extrabold tracking-tight text-slate-800">
+          Adaptive Diagnostic
+        </h2>
+
+        <div className="bg-white rounded-[2rem] p-6 md:p-8 shadow-xl shadow-slate-200/60 border border-white/90 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-5">
+            <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-3xl shadow-inner shrink-0 border border-emerald-100">
+              📊
+            </div>
             <div>
-              <h3 className="text-xl font-bold mb-1">
+              <h3 className="text-xl font-extrabold text-slate-800 mb-1">
                 Initial Assessment Status
               </h3>
-              <p className="text-base leading-relaxed opacity-90 max-w-xl">
-                Your 5-question baseline diagnostic evaluates your knowledge to assign your personalized learning tier ({tier || 'UNASSIGNED'}).
+              <p className="text-sm font-medium text-slate-600 max-w-xl leading-relaxed">
+                Your 5-question baseline diagnostic evaluates your skills to assign your personalized learning tier ({tier || 'UNASSIGNED'}).
               </p>
             </div>
           </div>
-          <Link href="/learning/math/chap_01/diagnostic" className="no-underline shrink-0">
-            <Button variant="secondary" size="lg" className="flex items-center justify-center">
-              🚀 Start Diagnostic Test
-            </Button>
+
+          {/* Focal Green Pill Button with Soft Glow */}
+          <Link href="/learning/math/chap_01/diagnostic" className="no-underline shrink-0 w-full md:w-auto">
+            <button className="w-full md:w-auto bg-emerald-500 hover:bg-emerald-600 text-white rounded-full px-8 py-3.5 font-extrabold text-base shadow-lg shadow-emerald-500/40 hover:translate-y-0.5 transition-all flex items-center justify-center gap-2.5 cursor-pointer border border-emerald-400/50">
+              <span>🚀</span> Start Diagnostic Test
+            </button>
           </Link>
-        </Card>
+        </div>
       </section>
     </main>
   );

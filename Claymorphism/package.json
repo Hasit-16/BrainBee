@@ -1,0 +1,10 @@
+{
+  "name": "claymorphism-kids-learning-website-template",
+  "version": "1.0.0",
+  "description": "A premium colorful Claymorphism HTML/CSS/JS template for a kids learning website.",
+  "scripts": {
+    "start": "npx -y serve .",
+    "dev": "npx -y serve ."
+  },
+  "dependencies": {}
+}

@@ -36,13 +36,18 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const hasLocalSession =
+    request.cookies.has('brainbee_session') ||
+    request.cookies.has('brainbee_role') ||
+    request.cookies.has('brainbee_user_session');
+
   const path = request.nextUrl.pathname;
   const isProtectedRoute =
     path.startsWith('/learning') ||
     path.startsWith('/evaluator') ||
     path.startsWith('/dashboard');
 
-  if (isProtectedRoute && !user) {
+  if (isProtectedRoute && !user && !hasLocalSession) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = '/login';
     return NextResponse.redirect(redirectUrl);
