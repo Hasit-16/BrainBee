@@ -58,42 +58,6 @@ export default function TwoPassQuizPage() {
     }
 
     async function verifyRouteGuard() {
-      const isLocallyCompleted = Boolean(completedQuizTopics?.[levelId]);
-      if (isLocallyCompleted) {
-        setIsGuarded(true);
-        clearQuizCache(levelId);
-        clearStoreProgress(levelId);
-        const targetUrl = `/learning/${subjectId}/${chapterId}`;
-        try { router.push(targetUrl); } catch (e) {}
-        window.location.href = targetUrl;
-        return;
-      }
-
-      try {
-        const supabase = createClient();
-        const userId = await getCurrentUserId();
-
-        const { data } = await supabase
-          .from('level_progress')
-          .select('is_completed')
-          .eq('user_id', userId)
-          .eq('chapter_id', chapterId)
-          .eq('level_id', levelId)
-          .maybeSingle();
-
-        if (data && data.is_completed === true) {
-          setIsGuarded(true);
-          clearQuizCache(levelId);
-          clearStoreProgress(levelId);
-          const targetUrl = `/learning/${subjectId}/${chapterId}`;
-          try { router.push(targetUrl); } catch (e) {}
-          window.location.href = targetUrl;
-          return;
-        }
-      } catch (e) {
-        console.warn('Route guard notice: proceeding with evaluation');
-      }
-
       const cachedState = getQuizCache(levelId);
       if (cachedState && typeof cachedState === 'object') {
         if (Array.isArray(cachedState.retryPass)) {
