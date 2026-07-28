@@ -1,5 +1,6 @@
 import rawDiagnosis from './Diagnosis.json';
 import rawQuiz from './Quiz.json';
+import rawChapters from './subject_and_chapters.json';
 
 export interface TieredTopic {
   topic_id: string;
@@ -10,6 +11,7 @@ export interface TieredTopic {
 
 export interface Chapter {
   chapter_id: string;
+  chapter_number: number;
   chapter_name: string;
   beginnerTopics: TieredTopic[];
   intermediateTopics: TieredTopic[];
@@ -85,17 +87,16 @@ function formatOptionsAndAnswer(rawOptions: string[], rawAnswer: string) {
     if (rawAnswer === 'True' || rawAnswer === 'False') {
       options = ['True', 'False'];
     } else {
-      // For fill in the blank or one-word answers, provide standard options including correct answer
       options = [rawAnswer, 'Option B', 'Option C', 'Option D'];
     }
   }
 
-  // Determine correct_index
   let correct_index = options.findIndex((opt) => opt === rawAnswer);
   if (correct_index === -1) {
-    correct_index = options.findIndex((opt) =>
-      opt.toLowerCase().includes(rawAnswer.toLowerCase()) ||
-      rawAnswer.toLowerCase().includes(opt.toLowerCase())
+    correct_index = options.findIndex(
+      (opt) =>
+        opt.toLowerCase().includes(rawAnswer.toLowerCase()) ||
+        rawAnswer.toLowerCase().includes(opt.toLowerCase())
     );
   }
   if (correct_index === -1) {
@@ -180,7 +181,52 @@ export function getQuizQuestions(subjectId?: string, chapterId?: string, levelId
   });
 }
 
-// Export default static fallback arrays for initial state
+// Build Chapter Objects dynamically from subject_and_chapters.json
+function buildChaptersForSubject(subjectName: string, prefix: string): Chapter[] {
+  const rawList = (rawChapters as any[]).filter((item) => item.subject === subjectName);
+  return rawList.map((item) => {
+    const chapNumStr = item.chapter_number < 10 ? `0${item.chapter_number}` : `${item.chapter_number}`;
+    const chapter_id = `chap_${chapNumStr}`;
+
+    return {
+      chapter_id,
+      chapter_number: item.chapter_number,
+      chapter_name: item.title,
+      beginnerTopics: [
+        { topic_id: 'BEGINNER', topic_name: `Foundations of ${item.title}`, is_completed: false }
+      ],
+      intermediateTopics: [
+        { topic_id: 'INTERMEDIATE', topic_name: `Core Concepts of ${item.title}`, is_completed: false }
+      ],
+      advancedTopics: [
+        { topic_id: 'ADVANCED', topic_name: `Advanced Applications of ${item.title}`, is_completed: false }
+      ]
+    };
+  });
+}
+
+const mathChapters = buildChaptersForSubject('Mathematics', 'math');
+const scienceChapters = buildChaptersForSubject('Environmental Science', 'science');
+
+const englishChapters: Chapter[] = [
+  {
+    chapter_id: 'chap_01',
+    chapter_number: 1,
+    chapter_name: 'Grammar & Vocabulary',
+    beginnerTopics: [{ topic_id: 'BEGINNER', topic_name: 'Nouns & Verbs', is_completed: false }],
+    intermediateTopics: [{ topic_id: 'INTERMEDIATE', topic_name: 'Verb Tenses', is_completed: false }],
+    advancedTopics: [{ topic_id: 'ADVANCED', topic_name: 'Complex Sentence Structure', is_completed: false }],
+  },
+  {
+    chapter_id: 'chap_02',
+    chapter_number: 2,
+    chapter_name: 'Reading Comprehension',
+    beginnerTopics: [{ topic_id: 'BEGINNER', topic_name: 'Main Idea & Details', is_completed: false }],
+    intermediateTopics: [{ topic_id: 'INTERMEDIATE', topic_name: 'Inferences & Context Clues', is_completed: false }],
+    advancedTopics: [{ topic_id: 'ADVANCED', topic_name: 'Author Intent & Themes', is_completed: false }],
+  }
+];
+
 export const diagnosticQuestions = getDiagnosticQuestions('math', 'chap_01');
 export const quizQuestions = getQuizQuestions('math', 'chap_01', 'BEGINNER');
 
@@ -189,7 +235,7 @@ export const mockData = {
     name: 'Alex Student',
     xp: 150,
     tier: 'UNASSIGNED' as 'UNASSIGNED' | 'FOUNDATION' | 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED',
-    overallProgress: 35,
+    overallProgress: 0,
     badges: ['Star Starter', 'Math Explorer']
   },
   badgeDefinitions,
@@ -202,58 +248,17 @@ export const mockData = {
       standard: 'Grade 5',
       icon: '📐',
       color: 'blue' as const,
-      progress: 40,
-      chapters: [
-        {
-          chapter_id: 'chap_01',
-          chapter_name: 'Fractions & Decimals',
-          beginnerTopics: [
-            { topic_id: 'BEGINNER', topic_name: 'Adding Basic Fractions', is_completed: false }
-          ],
-          intermediateTopics: [
-            { topic_id: 'INTERMEDIATE', topic_name: 'Finding LCM & GCD', is_completed: false }
-          ],
-          advancedTopics: [
-            { topic_id: 'ADVANCED', topic_name: 'Mixed Numbers Addition', is_completed: false }
-          ]
-        },
-        {
-          chapter_id: 'chap_02',
-          chapter_name: 'Geometry Basics',
-          beginnerTopics: [
-            { topic_id: 'BEGINNER', topic_name: 'Identifying Lines & Angles', is_completed: false }
-          ],
-          intermediateTopics: [
-            { topic_id: 'INTERMEDIATE', topic_name: 'Measuring Angles & Triangles', is_completed: false }
-          ],
-          advancedTopics: [
-            { topic_id: 'ADVANCED', topic_name: 'Perimeter & Area Formulas', is_completed: false }
-          ]
-        }
-      ]
+      progress: 0,
+      chapters: mathChapters,
     },
     {
       subject_id: 'science',
-      subject_name: 'Science',
+      subject_name: 'Environmental Science',
       standard: 'Grade 5',
       icon: '🧪',
       color: 'green' as const,
-      progress: 25,
-      chapters: [
-        {
-          chapter_id: 'chap_03',
-          chapter_name: 'States of Matter',
-          beginnerTopics: [
-            { topic_id: 'BEGINNER', topic_name: 'Solids, Liquids, Gases', is_completed: false }
-          ],
-          intermediateTopics: [
-            { topic_id: 'INTERMEDIATE', topic_name: 'Molecular Motion', is_completed: false }
-          ],
-          advancedTopics: [
-            { topic_id: 'ADVANCED', topic_name: 'Evaporation Curves', is_completed: false }
-          ]
-        }
-      ]
+      progress: 0,
+      chapters: scienceChapters,
     },
     {
       subject_id: 'english',
@@ -261,22 +266,8 @@ export const mockData = {
       standard: 'Grade 5',
       icon: '📚',
       color: 'purple' as const,
-      progress: 50,
-      chapters: [
-        {
-          chapter_id: 'chap_04',
-          chapter_name: 'Grammar & Vocabulary',
-          beginnerTopics: [
-            { topic_id: 'BEGINNER', topic_name: 'Nouns & Verbs', is_completed: false }
-          ],
-          intermediateTopics: [
-            { topic_id: 'INTERMEDIATE', topic_name: 'Verb Tenses', is_completed: false }
-          ],
-          advancedTopics: [
-            { topic_id: 'ADVANCED', topic_name: 'Complex Sentence Structure', is_completed: false }
-          ]
-        }
-      ]
+      progress: 0,
+      chapters: englishChapters,
     }
   ]
 };

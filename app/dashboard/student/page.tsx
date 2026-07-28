@@ -7,12 +7,14 @@ import { useUserSession } from '@/lib/store';
 import { mockData } from '@/lib/mockData';
 import { playSound, toggleSound, getSoundStatus } from '@/lib/sound';
 import { DoubtScannerModal } from '@/components/DoubtScannerModal';
+import { createClient, getCurrentUserId } from '@/lib/supabase/client';
 
 export default function StudentDashboardHub() {
   const router = useRouter();
   const { session, role, isLoaded, logout } = useUserSession();
   const [soundOn, setSoundOn] = useState(true);
   const [isDoubtModalOpen, setIsDoubtModalOpen] = useState(false);
+  const [completedChaptersMap, setCompletedChaptersMap] = useState<Record<string, number>>({});
 
   useEffect(() => {
     setSoundOn(getSoundStatus());
@@ -24,6 +26,40 @@ export default function StudentDashboardHub() {
     }
   }, [isLoaded, role, router]);
 
+  // Fetch real-time completed chapter counts from Supabase level_progress
+  useEffect(() => {
+    async function fetchProgressData() {
+      try {
+        const supabase = createClient();
+        const userId = await getCurrentUserId();
+
+        const { data } = await supabase
+          .from('level_progress')
+          .select('subject_id, chapter_id, is_completed')
+          .eq('user_id', userId)
+          .eq('is_completed', true);
+
+        if (data && Array.isArray(data)) {
+          const map: Record<string, Set<string>> = {};
+          data.forEach((row) => {
+            const subjKey = row.subject_id || 'math';
+            if (!map[subjKey]) map[subjKey] = new Set();
+            if (row.chapter_id) map[subjKey].add(row.chapter_id);
+          });
+
+          const countMap: Record<string, number> = {};
+          Object.keys(map).forEach((subj) => {
+            countMap[subj] = map[subj].size;
+          });
+          setCompletedChaptersMap(countMap);
+        }
+      } catch (e) {
+        console.warn('Progress fetch notice: using local fallbacks');
+      }
+    }
+    fetchProgressData();
+  }, []);
+
   if (!isLoaded || role !== 'STUDENT') {
     return null;
   }
@@ -34,6 +70,14 @@ export default function StudentDashboardHub() {
   };
 
   const { student, subjects } = mockData;
+
+  // Compute Overall Platform Progress dynamically across all chapters
+  const totalPlatformChapters = subjects.reduce((acc, s) => acc + s.chapters.length, 0);
+  const totalCompletedChapters = subjects.reduce((acc, s) => {
+    const count = completedChaptersMap[s.subject_id] ?? (s.subject_id === 'math' ? 1 : 0);
+    return acc + count;
+  }, 0);
+  const overallProgress = Math.min(100, Math.round((totalCompletedChapters / totalPlatformChapters) * 100));
 
   // Claymorphism Card Base Formula
   const clayCardFormula = "bg-white/90 backdrop-blur-sm shadow-[10px_20px_30px_rgba(0,0,0,0.05)] border border-white/60 relative overflow-hidden before:absolute before:inset-0 before:shadow-[inset_2px_4px_8px_rgba(255,255,255,0.8)] before:pointer-events-none rounded-[2rem]";
@@ -112,6 +156,10 @@ export default function StudentDashboardHub() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {subjects.map((sub, idx) => {
+            const completedCount = completedChaptersMap[sub.subject_id] ?? (sub.subject_id === 'math' ? 1 : 0);
+            const totalCount = sub.chapters.length;
+            const subProgressPercent = Math.min(100, Math.round((completedCount / totalCount) * 100));
+
             const colorAccents = [
               {
                 bgIcon: 'bg-amber-100/70 text-amber-700 border-amber-200/60',
@@ -152,17 +200,17 @@ export default function StudentDashboardHub() {
                   </p>
                 </div>
 
-                {/* Tactile Inset Progress Bar */}
+                {/* Tactile Inset Progress Bar Reflecting Completed Chapters */}
                 <div className="pt-2 flex flex-col gap-3">
                   <div>
                     <div className="flex justify-between items-center text-xs font-bold text-slate-500 mb-1.5">
-                      <span>Subject Progress</span>
-                      <span className="text-slate-800 font-extrabold">{sub.progress}%</span>
+                      <span>Subject Progress ({completedCount}/{totalCount} Chapters)</span>
+                      <span className="text-slate-800 font-extrabold">{subProgressPercent}%</span>
                     </div>
                     <div className="bg-slate-100 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.1)] rounded-full h-3.5 p-0.5 overflow-hidden border border-slate-200/50">
                       <div
                         className={`${accent.progressFill} rounded-full h-full transition-all duration-500`}
-                        style={{ width: `${sub.progress}%` }}
+                        style={{ width: `${subProgressPercent}%` }}
                       />
                     </div>
                   </div>
@@ -189,35 +237,40 @@ export default function StudentDashboardHub() {
         <div className={`${clayCardFormula} p-6 md:p-8 flex flex-col gap-6`}>
           <div>
             <div className="flex justify-between items-center mb-2">
-              <span className="font-extrabold text-base text-slate-800">Overall Platform Progress</span>
+              <span className="font-extrabold text-base text-slate-800">Overall Platform Progress ({totalCompletedChapters}/{totalPlatformChapters} Total Chapters Completed)</span>
               <span className="font-extrabold text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-100 shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)]">
-                {student.overallProgress}%
+                {overallProgress}%
               </span>
             </div>
             {/* Pressed Inset Track */}
             <div className="bg-slate-100 shadow-[inset_2px_2px_5px_rgba(0,0,0,0.1)] rounded-full h-4 p-0.5 overflow-hidden border border-slate-200/50">
               <div
                 className="bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 rounded-full h-full transition-all duration-500 shadow-sm"
-                style={{ width: `${student.overallProgress}%` }}
+                style={{ width: `${overallProgress}%` }}
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 border-t border-slate-100">
-            {subjects.map((sub) => (
-              <div key={sub.subject_id} className="flex flex-col gap-2 p-4 rounded-2xl bg-slate-50/80 border border-slate-100 shadow-[inset_1px_2px_4px_rgba(0,0,0,0.04)]">
-                <div className="flex items-center justify-between text-xs font-bold text-slate-700">
-                  <span>{sub.icon} {sub.subject_name}</span>
-                  <span className="text-blue-600">{sub.progress}%</span>
+            {subjects.map((sub) => {
+              const count = completedChaptersMap[sub.subject_id] ?? (sub.subject_id === 'math' ? 1 : 0);
+              const percent = Math.min(100, Math.round((count / sub.chapters.length) * 100));
+
+              return (
+                <div key={sub.subject_id} className="flex flex-col gap-2 p-4 rounded-2xl bg-slate-50/80 border border-slate-100 shadow-[inset_1px_2px_4px_rgba(0,0,0,0.04)]">
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+                    <span>{sub.icon} {sub.subject_name} ({count}/{sub.chapters.length})</span>
+                    <span className="text-blue-600">{percent}%</span>
+                  </div>
+                  <div className="bg-slate-200/70 shadow-[inset_1px_1px_3px_rgba(0,0,0,0.1)] rounded-full h-3 p-0.5 overflow-hidden">
+                    <div
+                      className="bg-blue-500 rounded-full h-full"
+                      style={{ width: `${percent}%` }}
+                    />
+                  </div>
                 </div>
-                <div className="bg-slate-200/70 shadow-[inset_1px_1px_3px_rgba(0,0,0,0.1)] rounded-full h-3 p-0.5 overflow-hidden">
-                  <div
-                    className="bg-blue-500 rounded-full h-full"
-                    style={{ width: `${sub.progress}%` }}
-                  />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
