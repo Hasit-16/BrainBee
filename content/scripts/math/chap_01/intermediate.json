@@ -1,0 +1,73 @@
+{
+  "subject": "Mathematics",
+  "chapterId": "chap_01",
+  "chapterTitle": "Parts and Wholes — Converting & Simplifying Decimals",
+  "domainGuide": {
+    "name": "Chef Baker",
+    "avatarKey": "baker"
+  },
+  "student": {
+    "name": "Leo",
+    "avatarKey": "leo"
+  },
+  "level": "intermediate",
+  "parts": [
+    {
+      "id": "hook",
+      "label": "The Hook",
+      "targetDurationSec": 30,
+      "sceneDirection": "Chef Baker's bakery kitchen. A recipe card floats with '0.50 kg sugar' and '2/4 kg flour'.",
+      "beats": [
+        { "speaker": "leo", "line": "Chef Baker! The recipe asks for 2/4 kg of flour, but my scale only measures decimals! How do I convert them?" },
+        { "speaker": "guide", "stageDirection": "Chef Baker spins a digital recipe converter with a warm flame animation.", "line": "Ah, Leo! Fractions and decimals are twin brothers. 2/4 is the exact same amount as 0.50!" },
+        { "speaker": "leo", "line": "So fractions can transform into decimals without changing the recipe?" },
+        { "speaker": "guide", "line": "Precisely! Let's master the art of fraction-decimal transformation!" }
+      ]
+    },
+    {
+      "id": "core_breakdown",
+      "label": "The Core Breakdown",
+      "targetDurationSec": 60,
+      "sceneDirection": "A measuring jar divided into 10 divisions. 5 divisions fill up to show 5/10 = 0.5.",
+      "beats": [
+        { "speaker": "guide", "line": "To simplify a fraction like 4/8, divide both top and bottom by their greatest common divisor (4) to get 1/2." },
+        { "speaker": "leo", "line": "And 1/2 is equal to 5/10, which is written as 0.5 in decimal form!" },
+        { "speaker": "guide", "line": "Bravo! Converting the denominator to 10 or 100 makes decimal conversion effortless!" }
+      ]
+    },
+    {
+      "id": "diagnostic_pause",
+      "label": "Interactive Diagnostic Pause",
+      "targetDurationSec": 30,
+      "type": "mcq",
+      "prompt": "What is the simplified decimal form of the fraction 3/4?",
+      "options": [
+        { "id": "A", "text": "0.25" },
+        { "id": "B", "text": "0.75" },
+        { "id": "C", "text": "0.50" }
+      ],
+      "correctOptionId": "B",
+      "explanation": "3/4 is equivalent to 75/100, which is written as 0.75 in decimal notation."
+    },
+    {
+      "id": "lightbulb",
+      "label": "The Lightbulb Moment",
+      "targetDurationSec": 30,
+      "sceneDirection": "Leo measuring cake ingredients accurately using decimal scales.",
+      "beats": [
+        { "speaker": "leo", "line": "Aha! Converting fractions to tenths or hundredths makes decimals super easy to read!" },
+        { "speaker": "guide", "line": "You've got the chef's touch, Leo! Perfect measurements every time." }
+      ]
+    },
+    {
+      "id": "xp_recap",
+      "label": "Quick XP Recap",
+      "targetDurationSec": 15,
+      "badge": "Decimal Transformer Unlocked!",
+      "beats": [
+        { "speaker": "guide", "line": "XP Unlocked: You mastered converting fractions to simplified decimals!" },
+        { "speaker": "leo", "line": "Decimal Transformer level complete! 🎯" }
+      ]
+    }
+  ]
+}

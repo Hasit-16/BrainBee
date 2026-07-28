@@ -1,0 +1,73 @@
+{
+  "subject": "Mathematics",
+  "chapterId": "chap_01",
+  "chapterTitle": "Parts and Wholes — Ratios & Multi-Step Applications",
+  "domainGuide": {
+    "name": "Commander Astro",
+    "avatarKey": "astronaut"
+  },
+  "student": {
+    "name": "Leo",
+    "avatarKey": "leo"
+  },
+  "level": "advanced",
+  "parts": [
+    {
+      "id": "hook",
+      "label": "The Hook",
+      "targetDurationSec": 30,
+      "sceneDirection": "Space Station Control Room. Holographic fuel meters float with ratios and percentages.",
+      "beats": [
+        { "speaker": "leo", "line": "Commander Astro! The rocket booster fuel is split between hydrogen and oxygen in a 3:2 ratio, and we need 80% total capacity to launch!" },
+        { "speaker": "guide", "stageDirection": "Commander Astro activates the Holo-Grid Navigation system.", "line": "Hold steady, cadet! Multi-step ratio and decimal calculations determine whether we achieve orbital escape velocity!" },
+        { "speaker": "leo", "line": "So we need to convert ratios, fractions, and percentages into a unified decimal format first?" },
+        { "speaker": "guide", "line": "Affirmative! Precision is key in space exploration." }
+      ]
+    },
+    {
+      "id": "core_breakdown",
+      "label": "The Core Breakdown",
+      "targetDurationSec": 60,
+      "sceneDirection": "Fuel tanks filling to 60% Hydrogen and 40% Oxygen, matching 3:2 ratio.",
+      "beats": [
+        { "speaker": "guide", "line": "In a 3:2 ratio, the total parts equal 3 + 2 = 5. Hydrogen is 3/5 (60%) and Oxygen is 2/5 (40%)." },
+        { "speaker": "leo", "line": "And 3/5 is equal to 0.60, while 2/5 is equal to 0.40!" },
+        { "speaker": "guide", "line": "Spot on, Commander Leo! Converting all terms into decimals allows instant multi-step calculations!" }
+      ]
+    },
+    {
+      "id": "diagnostic_pause",
+      "label": "Interactive Diagnostic Pause",
+      "targetDurationSec": 30,
+      "type": "mcq",
+      "prompt": "If a fuel tank contains a 4:1 ratio of Oxygen to Nitrogen and total capacity is 100 liters, how many liters of Oxygen are in the tank?",
+      "options": [
+        { "id": "A", "text": "20 Liters" },
+        { "id": "B", "text": "80 Liters" },
+        { "id": "C", "text": "40 Liters" }
+      ],
+      "correctOptionId": "B",
+      "explanation": "The total parts are 4 + 1 = 5. Oxygen represents 4/5 of 100 liters = 80 liters."
+    },
+    {
+      "id": "lightbulb",
+      "label": "The Lightbulb Moment",
+      "targetDurationSec": 30,
+      "sceneDirection": "Rocket thrusters igniting into space as fuel gauges align perfectly.",
+      "beats": [
+        { "speaker": "leo", "line": "Mission Control, we have liftoff! Ratios and decimals are powerful tools for complex real-world engineering!" },
+        { "speaker": "guide", "line": "You've earned your wings, Cadet Leo. Stellar work!" }
+      ]
+    },
+    {
+      "id": "xp_recap",
+      "label": "Quick XP Recap",
+      "targetDurationSec": 15,
+      "badge": "Orbital Master Unlocked!",
+      "beats": [
+        { "speaker": "guide", "line": "XP Unlocked: You mastered multi-step ratio and decimal applications!" },
+        { "speaker": "leo", "line": "Orbital Master level complete! 🚀" }
+      ]
+    }
+  ]
+}

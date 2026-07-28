@@ -1,0 +1,73 @@
+{
+  "subject": "Mathematics",
+  "chapterId": "chap_01",
+  "chapterTitle": "Parts and Wholes — Understanding Fractions",
+  "domainGuide": {
+    "name": "Doraemon",
+    "avatarKey": "doraemon"
+  },
+  "student": {
+    "name": "Leo",
+    "avatarKey": "leo"
+  },
+  "level": "beginner",
+  "parts": [
+    {
+      "id": "hook",
+      "label": "The Hook",
+      "targetDurationSec": 30,
+      "sceneDirection": "Leo inside a colorful virtual kitchen. A giant pizza appears with glowing fraction symbols floating around it.",
+      "beats": [
+        { "speaker": "leo", "line": "Whoa! Doraemon, I found a pizza party game, but it says I need to share the pizza equally with my friends. How do I know how much pizza each person gets?" },
+        { "speaker": "guide", "stageDirection": "Doraemon pulls out a 'Fraction Finder Gadget' with a sparkle animation.", "line": "No worries, Leo! You've just discovered the secret code of parts and wholes. A whole thing can be split into smaller equal parts, and fractions help us describe those pieces!" },
+        { "speaker": "leo", "line": "So fractions are like a game map showing how much of the treasure we collected?" },
+        { "speaker": "guide", "line": "Exactly! You're about to unlock the 'Fraction Explorer' skill!" }
+      ]
+    },
+    {
+      "id": "core_breakdown",
+      "label": "The Core Breakdown",
+      "targetDurationSec": 60,
+      "sceneDirection": "A whole pizza divides into 2, then 4 equal slices. Each slice glows as Doraemon points to it.",
+      "beats": [
+        { "speaker": "guide", "line": "Imagine this pizza is one complete object. We call it a whole. If we split it into equal pieces, each piece becomes a part of that whole." },
+        { "speaker": "leo", "line": "So if I cut the pizza into 4 equal slices, every slice is one part of the same pizza?" },
+        { "speaker": "guide", "line": "Correct! Since the pizza is divided into 4 equal parts, each slice is called one-fourth. We write it as 1/4." }
+      ]
+    },
+    {
+      "id": "diagnostic_pause",
+      "label": "Interactive Diagnostic Pause",
+      "targetDurationSec": 30,
+      "type": "mcq",
+      "prompt": "Imagine a chocolate bar is divided into 3 equal pieces. You eat 1 piece. What fraction of the chocolate did you eat?",
+      "options": [
+        { "id": "A", "text": "1/2" },
+        { "id": "B", "text": "1/3" },
+        { "id": "C", "text": "3/1" }
+      ],
+      "correctOptionId": "B",
+      "explanation": "The whole was divided into 3 equal parts, and we are talking about 1 of those parts."
+    },
+    {
+      "id": "lightbulb",
+      "label": "The Lightbulb Moment",
+      "targetDurationSec": 30,
+      "sceneDirection": "Leo sharing a cake with friends. Fraction symbols glow around equal pieces.",
+      "beats": [
+        { "speaker": "leo", "line": "Ohhh! Fractions aren't just numbers. They're like labels that tell us how much of something we have compared to the whole!" },
+        { "speaker": "guide", "line": "That's the idea! Whether it's pizza, cake, a toy collection, or a drawing, fractions help us understand pieces of a complete thing." }
+      ]
+    },
+    {
+      "id": "xp_recap",
+      "label": "Quick XP Recap",
+      "targetDurationSec": 15,
+      "badge": "Fraction Explorer Unlocked!",
+      "beats": [
+        { "speaker": "guide", "line": "XP Unlocked: You learned that a fraction shows how many equal parts we have out of the total parts in a whole!" },
+        { "speaker": "leo", "line": "Fraction Explorer level complete! 🚀" }
+      ]
+    }
+  ]
+}

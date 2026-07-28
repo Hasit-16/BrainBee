@@ -1,14 +1,22 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useUserSession } from '@/lib/store';
 import { mockData } from '@/lib/mockData';
+import { playSound, toggleSound, getSoundStatus } from '@/lib/sound';
+import { DoubtScannerModal } from '@/components/DoubtScannerModal';
 
 export default function StudentDashboardHub() {
   const router = useRouter();
-  const { session, role, isLoaded, logout, tier } = useUserSession();
+  const { session, role, isLoaded, logout } = useUserSession();
+  const [soundOn, setSoundOn] = useState(true);
+  const [isDoubtModalOpen, setIsDoubtModalOpen] = useState(false);
+
+  useEffect(() => {
+    setSoundOn(getSoundStatus());
+  }, []);
 
   useEffect(() => {
     if (isLoaded && role !== 'STUDENT') {
@@ -27,12 +35,15 @@ export default function StudentDashboardHub() {
 
   const { student, subjects } = mockData;
 
+  // Claymorphism Card Base Formula
+  const clayCardFormula = "bg-white/90 backdrop-blur-sm shadow-[10px_20px_30px_rgba(0,0,0,0.05)] border border-white/60 relative overflow-hidden before:absolute before:inset-0 before:shadow-[inset_2px_4px_8px_rgba(255,255,255,0.8)] before:pointer-events-none rounded-[2rem]";
+
   return (
     <main className="min-h-screen bg-[#f4f7fb] text-slate-800 p-6 md:p-10 max-w-7xl mx-auto flex flex-col gap-10 font-sans">
-      {/* STEP 1: HEADER & STATS (Pills & White Clay Container) */}
-      <header className="bg-white rounded-[2.5rem] p-6 md:p-8 shadow-xl shadow-slate-200/60 border border-white/90 flex flex-wrap items-center justify-between gap-6">
+      {/* STEP 1: HEADER & STATS (Pills & 3D Clay Container) */}
+      <header className={`${clayCardFormula} p-6 md:p-8 flex flex-wrap items-center justify-between gap-6`}>
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-blue-500/10 border-2 border-blue-500/20 text-blue-600 flex items-center justify-center font-extrabold text-2xl shadow-inner">
+          <div className="w-14 h-14 rounded-full bg-slate-100 border border-slate-200/60 text-slate-700 flex items-center justify-center font-extrabold text-2xl shadow-[inset_2px_4px_6px_rgba(0,0,0,0.08)]">
             👤
           </div>
           <div>
@@ -40,31 +51,52 @@ export default function StudentDashboardHub() {
               Welcome back, {session?.name || student.name}!
             </h1>
             <p className="text-sm font-semibold text-slate-500 mt-0.5">
-              Grade 5 • Current Tier: <span className="text-blue-600 font-bold uppercase">{tier || student.tier}</span>
+              Grade 5
             </p>
           </div>
         </div>
 
-        {/* Action Buttons as Puffy, Pill-Shaped Buttons */}
+        {/* STEP 2: GLOWING "JELLY" ACTION BUTTONS */}
         <div className="flex items-center gap-3 flex-wrap">
-          <button className="rounded-full px-5 py-2.5 bg-amber-100 hover:bg-amber-200 text-amber-800 font-bold text-sm shadow-md shadow-amber-200/50 hover:translate-y-0.5 transition-all flex items-center gap-2 cursor-pointer border border-amber-200/60">
+          {/* Sound Toggle Button */}
+          <button
+            onClick={() => {
+              const enabled = toggleSound();
+              setSoundOn(enabled);
+              if (enabled) playSound('click');
+            }}
+            className="bg-gradient-to-b from-blue-100 to-blue-200 text-blue-800 shadow-[0_6px_12px_rgba(59,130,246,0.25)] border-t border-white/80 rounded-full font-bold text-sm px-5 py-2.5 hover:translate-y-0.5 active:translate-y-1 transition-all flex items-center gap-2 cursor-pointer"
+          >
+            {soundOn ? '🔊 Sound ON' : '🔇 Muted'}
+          </button>
+
+          {/* Doubt Scan Button */}
+          <button
+            onClick={() => {
+              playSound('click');
+              setIsDoubtModalOpen(true);
+            }}
+            className="bg-gradient-to-b from-amber-200 to-amber-300 text-amber-900 shadow-[0_6px_12px_rgba(245,158,11,0.3)] border-t border-white/80 rounded-full font-bold text-sm px-5 py-2.5 hover:translate-y-0.5 active:translate-y-1 transition-all flex items-center gap-2 cursor-pointer"
+          >
             🔍 Doubt Scan
           </button>
           
-          <div className="rounded-full px-5 py-2.5 bg-amber-400 text-amber-950 font-extrabold text-sm shadow-md shadow-amber-400/40 flex items-center gap-1.5 border border-amber-300">
+          {/* XP Pill */}
+          <div className="bg-gradient-to-b from-amber-300 to-amber-400 text-amber-950 shadow-[0_6px_12px_rgba(245,158,11,0.35)] border-t border-amber-200 rounded-full font-extrabold text-sm px-5 py-2.5 flex items-center gap-1.5">
             ⭐ {student.xp} XP
           </div>
 
+          {/* Logout Button */}
           <button
             onClick={handleLogout}
-            className="rounded-full px-5 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-sm shadow-sm hover:translate-y-0.5 transition-all cursor-pointer border border-rose-200/60"
+            className="bg-gradient-to-b from-rose-100 to-rose-200 text-rose-700 shadow-[0_6px_12px_rgba(244,63,94,0.2)] border-t border-white/80 rounded-full font-bold text-sm px-5 py-2.5 hover:translate-y-0.5 active:translate-y-1 transition-all cursor-pointer"
           >
             Logout 🚪
           </button>
         </div>
       </header>
 
-      {/* STEP 2: SUBJECT CARDS (Grid Layout - Pure White Clay Cards with Accent Buttons) */}
+      {/* STEP 2: SUBJECT CARDS (Grid Layout - True 3D Clay Cards & Glowing Jelly Buttons) */}
       <section className="flex flex-col gap-5">
         <div className="flex items-center justify-between">
           <div>
@@ -73,7 +105,7 @@ export default function StudentDashboardHub() {
             </h2>
             <p className="text-xs font-semibold text-slate-500 mt-1">Select a subject to start your micro-learning journey</p>
           </div>
-          <span className="rounded-full px-4 py-1.5 bg-blue-50 text-blue-600 font-bold text-xs border border-blue-100">
+          <span className="bg-blue-100/80 text-blue-600 font-bold text-xs rounded-full px-4 py-1.5 shadow-[0_4px_10px_rgba(59,130,246,0.15)] border border-blue-200/50">
             Select to Start Learning
           </span>
         </div>
@@ -81,23 +113,35 @@ export default function StudentDashboardHub() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {subjects.map((sub, idx) => {
             const colorAccents = [
-              { bgIcon: 'bg-blue-50 text-blue-600', btn: 'bg-blue-500 hover:bg-blue-600 shadow-blue-500/30' },
-              { bgIcon: 'bg-emerald-50 text-emerald-600', btn: 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/30' },
-              { bgIcon: 'bg-purple-50 text-purple-600', btn: 'bg-purple-500 hover:bg-purple-600 shadow-purple-500/30' },
+              {
+                bgIcon: 'bg-amber-100/70 text-amber-700 border-amber-200/60',
+                btnClass: 'clay-btn-blue',
+                progressFill: 'bg-gradient-to-r from-blue-400 to-blue-500'
+              },
+              {
+                bgIcon: 'bg-emerald-100/70 text-emerald-700 border-emerald-200/60',
+                btnClass: 'clay-btn-green',
+                progressFill: 'bg-gradient-to-r from-emerald-400 to-emerald-500'
+              },
+              {
+                bgIcon: 'bg-purple-100/70 text-purple-700 border-purple-200/60',
+                btnClass: 'clay-btn-purple',
+                progressFill: 'bg-gradient-to-r from-purple-400 to-purple-500'
+              },
             ];
             const accent = colorAccents[idx % colorAccents.length];
 
             return (
               <div
                 key={sub.subject_id}
-                className="bg-white rounded-[2rem] p-6 shadow-xl shadow-slate-200/60 border border-white/90 flex flex-col justify-between transition-all hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-slate-300/60"
+                className={`${clayCardFormula} p-6 flex flex-col justify-between transition-all hover:-translate-y-1.5 hover:shadow-[15px_25px_35px_rgba(0,0,0,0.08)]`}
               >
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <span className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shadow-inner ${accent.bgIcon}`}>
+                    <span className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl shadow-[inset_2px_4px_6px_rgba(0,0,0,0.06)] border ${accent.bgIcon}`}>
                       {sub.icon}
                     </span>
-                    <span className="rounded-full px-3 py-1 text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200/60">
+                    <span className="bg-slate-100 text-slate-600 font-bold text-xs rounded-full px-3.5 py-1 border border-slate-200/60 shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)]">
                       {sub.standard}
                     </span>
                   </div>
@@ -108,26 +152,24 @@ export default function StudentDashboardHub() {
                   </p>
                 </div>
 
-                {/* STEP 3: Tactile Progress Bar */}
+                {/* Tactile Inset Progress Bar */}
                 <div className="pt-2 flex flex-col gap-3">
                   <div>
                     <div className="flex justify-between items-center text-xs font-bold text-slate-500 mb-1.5">
                       <span>Subject Progress</span>
                       <span className="text-slate-800 font-extrabold">{sub.progress}%</span>
                     </div>
-                    <div className="bg-slate-100 shadow-inner rounded-full h-3.5 p-0.5 overflow-hidden border border-slate-200/40">
+                    <div className="bg-slate-100 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.1)] rounded-full h-3.5 p-0.5 overflow-hidden border border-slate-200/50">
                       <div
-                        className="bg-gradient-to-r from-blue-400 to-blue-500 rounded-full h-full transition-all duration-500"
+                        className={`${accent.progressFill} rounded-full h-full transition-all duration-500`}
                         style={{ width: `${sub.progress}%` }}
                       />
                     </div>
                   </div>
 
-                  {/* Soft Pill-Shaped Start Button */}
+                  {/* Clean Global Claymorphism Button */}
                   <Link href={`/learning/${sub.subject_id}`} className="no-underline mt-2">
-                    <button
-                      className={`w-full rounded-full py-3 px-6 text-white font-extrabold text-sm shadow-lg ${accent.btn} hover:translate-y-0.5 transition-all flex items-center justify-center gap-2 cursor-pointer`}
-                    >
+                    <button className={accent.btnClass}>
                       Start Learning 🚀
                     </button>
                   </Link>
@@ -144,14 +186,16 @@ export default function StudentDashboardHub() {
           Learning Progress
         </h2>
 
-        <div className="bg-white rounded-[2rem] p-6 md:p-8 shadow-xl shadow-slate-200/60 border border-white/90 flex flex-col gap-6">
+        <div className={`${clayCardFormula} p-6 md:p-8 flex flex-col gap-6`}>
           <div>
             <div className="flex justify-between items-center mb-2">
               <span className="font-extrabold text-base text-slate-800">Overall Platform Progress</span>
-              <span className="font-extrabold text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-full">{student.overallProgress}%</span>
+              <span className="font-extrabold text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-100 shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)]">
+                {student.overallProgress}%
+              </span>
             </div>
             {/* Pressed Inset Track */}
-            <div className="bg-slate-100 shadow-inner rounded-full h-4 p-0.5 overflow-hidden border border-slate-200/50">
+            <div className="bg-slate-100 shadow-[inset_2px_2px_5px_rgba(0,0,0,0.1)] rounded-full h-4 p-0.5 overflow-hidden border border-slate-200/50">
               <div
                 className="bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 rounded-full h-full transition-all duration-500 shadow-sm"
                 style={{ width: `${student.overallProgress}%` }}
@@ -161,12 +205,12 @@ export default function StudentDashboardHub() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 border-t border-slate-100">
             {subjects.map((sub) => (
-              <div key={sub.subject_id} className="flex flex-col gap-2 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+              <div key={sub.subject_id} className="flex flex-col gap-2 p-4 rounded-2xl bg-slate-50/80 border border-slate-100 shadow-[inset_1px_2px_4px_rgba(0,0,0,0.04)]">
                 <div className="flex items-center justify-between text-xs font-bold text-slate-700">
                   <span>{sub.icon} {sub.subject_name}</span>
                   <span className="text-blue-600">{sub.progress}%</span>
                 </div>
-                <div className="bg-slate-200/60 shadow-inner rounded-full h-3 p-0.5 overflow-hidden">
+                <div className="bg-slate-200/70 shadow-[inset_1px_1px_3px_rgba(0,0,0,0.1)] rounded-full h-3 p-0.5 overflow-hidden">
                   <div
                     className="bg-blue-500 rounded-full h-full"
                     style={{ width: `${sub.progress}%` }}
@@ -178,35 +222,12 @@ export default function StudentDashboardHub() {
         </div>
       </section>
 
-      {/* STEP 4: DIAGNOSTIC CTA (Dedicated White Clay Card & Vibrant Green Focal Button) */}
-      <section className="flex flex-col gap-5">
-        <h2 className="text-2xl font-extrabold tracking-tight text-slate-800">
-          Adaptive Diagnostic
-        </h2>
-
-        <div className="bg-white rounded-[2rem] p-6 md:p-8 shadow-xl shadow-slate-200/60 border border-white/90 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-5">
-            <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-3xl shadow-inner shrink-0 border border-emerald-100">
-              📊
-            </div>
-            <div>
-              <h3 className="text-xl font-extrabold text-slate-800 mb-1">
-                Initial Assessment Status
-              </h3>
-              <p className="text-sm font-medium text-slate-600 max-w-xl leading-relaxed">
-                Your 5-question baseline diagnostic evaluates your skills to assign your personalized learning tier ({tier || 'UNASSIGNED'}).
-              </p>
-            </div>
-          </div>
-
-          {/* Focal Green Pill Button with Soft Glow */}
-          <Link href="/learning/math/chap_01/diagnostic" className="no-underline shrink-0 w-full md:w-auto">
-            <button className="w-full md:w-auto bg-emerald-500 hover:bg-emerald-600 text-white rounded-full px-8 py-3.5 font-extrabold text-base shadow-lg shadow-emerald-500/40 hover:translate-y-0.5 transition-all flex items-center justify-center gap-2.5 cursor-pointer border border-emerald-400/50">
-              <span>🚀</span> Start Diagnostic Test
-            </button>
-          </Link>
-        </div>
-      </section>
+      {/* DOUBT SCANNER MODAL */}
+      <DoubtScannerModal
+        isOpen={isDoubtModalOpen}
+        onClose={() => setIsDoubtModalOpen(false)}
+        studentId={session?.id}
+      />
     </main>
   );
 }

@@ -12,6 +12,8 @@ import { useUserSession, saveQuizCache, getQuizCache, clearQuizCache } from '@/l
 import { getQuizQuestions, QuizQuestion, badgeDefinitions, BadgeDefinition } from '@/lib/mockData';
 import { createClient, getCurrentUserId } from '@/lib/supabase/client';
 
+import { playSound } from '@/lib/sound';
+
 export default function TwoPassQuizPage() {
   const router = useRouter();
   const params = useParams();
@@ -145,6 +147,7 @@ export default function TwoPassQuizPage() {
     setSelectedOption(optIdx);
 
     const isCorrect = optIdx === currentQuestion.correct_index;
+    playSound(isCorrect ? 'correct' : 'wrong');
 
     if (!isSecondPass) {
       const newRetryQueue = !isCorrect ? [...retryPass, currentQuestion] : retryPass;

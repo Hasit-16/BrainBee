@@ -1,9 +1,11 @@
 import React from 'react';
+import { playSound } from '@/lib/sound';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'warning' | 'danger' | 'purple' | 'orange' | 'white' | 'disabled';
   size?: 'sm' | 'md' | 'lg';
   children: React.ReactNode;
+  disableSound?: boolean;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -12,6 +14,8 @@ export const Button: React.FC<ButtonProps> = ({
   children,
   className = '',
   disabled,
+  disableSound = false,
+  onClick,
   ...props
 }) => {
   const baseClass = 'clay-btn';
@@ -49,8 +53,17 @@ export const Button: React.FC<ButtonProps> = ({
 
   const combinedClassName = `${baseClass} ${variantClass} ${sizeClass} ${className}`.trim();
 
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (!disableSound) {
+      playSound('click');
+    }
+    if (onClick) {
+      onClick(e);
+    }
+  };
+
   return (
-    <button className={combinedClassName} disabled={disabled || variant === 'disabled'} {...props}>
+    <button className={combinedClassName} disabled={disabled || variant === 'disabled'} onClick={handleClick} {...props}>
       {children}
     </button>
   );

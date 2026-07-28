@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import AgentationClient from '@/components/AgentationClient';
 
 export const metadata: Metadata = {
   title: 'BrainBee - Adaptive Learning Management System',
@@ -23,6 +24,7 @@ export default function RootLayout({
         <div id="root-canvas">
           {children}
         </div>
+        <AgentationClient />
       </body>
     </html>
   );
